@@ -19,6 +19,7 @@ This course is organized into modules, progressing from fundamental machine lear
    - Binary classification techniques
 
 3. **Support Vector Machine (SVM)**
+
    - Advanced classification methods
    - Kernel tricks and optimization
 
@@ -40,6 +41,7 @@ This course is organized into modules, progressing from fundamental machine lear
    - Advanced computer vision techniques
 
 7. **Face Recognition**
+
    - Biometric identification systems
    - Real-world security applications
 
@@ -51,11 +53,15 @@ This course is organized into modules, progressing from fundamental machine lear
    - Image and content generation
 
 9. **Natural Language Processing (NLP)**
+
    - Text analysis and understanding
    - Language models and applications
 
 ### 🖼️ Specialized Applications
 
-10. **Image Classification**
+10. **Image Classification Project**
+
     - Categorizing and organizing visual data
     - Practical classification projects
+
+11. **Face Recognition Project**
