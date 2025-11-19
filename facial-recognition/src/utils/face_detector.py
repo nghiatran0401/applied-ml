@@ -8,27 +8,31 @@ from facenet_pytorch import MTCNN
 from PIL import Image
 import torch
 import math
+from src.utils.config import get_config
 
 class FaceDetector:
     def __init__(self, device=None):
-        if device is None:
-            # Device selection: CUDA > CPU
-            if torch.cuda.is_available():
-                device = 'cuda'
-            else:
-                device = 'cpu'
         """
         Initialize MTCNN face detector
         
         Args:
             device: 'cuda' or 'cpu'
         """
+        if device is None:
+            # Device selection: CUDA > CPU
+            if torch.cuda.is_available():
+                device = 'cuda'
+            else:
+                device = 'cpu'
+        
         self.device = device
+        config = get_config()
+        
         self.mtcnn = MTCNN(
-            image_size=160,
+            image_size=config.face_detection.image_size,
             margin=0,
-            min_face_size=10,  # Lower minimum face size for better detection
-            thresholds=[0.5, 0.6, 0.6],  # Lower thresholds for more lenient detection
+            min_face_size=config.face_detection.min_face_size,
+            thresholds=config.face_detection.mtcnn_thresholds,
             factor=0.709,
             post_process=False,
             device=device
@@ -143,20 +147,25 @@ class FaceDetector:
         # Convert PIL to numpy for processing
         face_np = np.array(face_image.convert('L'))  # Grayscale
         
+        config = get_config()
+        quality_cfg = config.face_detection.quality
+        
         # 1. Sharpness (Laplacian variance)
         laplacian = cv2.Laplacian(face_np, cv2.CV_64F)
         sharpness = laplacian.var()
-        sharpness_score = min(sharpness / 500.0, 1.0)  # Normalize (500 is good threshold)
+        # Lowered threshold from 500 to 200 to be more lenient with sharpness detection
+        # This prevents good images from being marked as blurry
+        sharpness_score = min(sharpness / quality_cfg.sharpness_threshold, 1.0)
         
         # 2. Size (face should be reasonably large)
         face_area = face_width * face_height
         img_area = img_width * img_height
         size_ratio = face_area / img_area
         # Ideal: 5-15% of image
-        if size_ratio < 0.02:  # Too small
-            size_score = size_ratio / 0.02
-        elif size_ratio > 0.30:  # Too large (might be cropped wrong)
-            size_score = max(0.5, 1.0 - (size_ratio - 0.30) / 0.20)
+        if size_ratio < quality_cfg.min_size_ratio:  # Too small
+            size_score = size_ratio / quality_cfg.min_size_ratio
+        elif size_ratio > quality_cfg.max_size_ratio:  # Too large (might be cropped wrong)
+            size_score = max(0.5, 1.0 - (size_ratio - quality_cfg.max_size_ratio) / 0.20)
         else:  # Good size
             size_score = 1.0
         
@@ -170,20 +179,21 @@ class FaceDetector:
         
         # 4. Brightness (should be well-lit, not too dark or too bright)
         mean_brightness = np.mean(face_np)
-        # Ideal: 80-200 (out of 255)
-        if 80 <= mean_brightness <= 200:
+        # More lenient brightness range: 60-220 (out of 255)
+        # This allows for more lighting variations
+        if 60 <= mean_brightness <= 220:
             brightness_score = 1.0
-        elif mean_brightness < 80:
-            brightness_score = mean_brightness / 80.0
-        else:  # > 200
-            brightness_score = max(0.0, 1.0 - (mean_brightness - 200) / 55.0)
+        elif mean_brightness < 60:
+            brightness_score = mean_brightness / 60.0
+        else:  # > 220
+            brightness_score = max(0.0, 1.0 - (mean_brightness - 220) / 35.0)
         
-        # Weighted combination
+        # Weighted combination using config values
         quality_score = (
-            0.4 * sharpness_score +
-            0.3 * size_score +
-            0.15 * aspect_score +
-            0.15 * brightness_score
+            quality_cfg.sharpness_weight * sharpness_score +
+            quality_cfg.size_weight * size_score +
+            quality_cfg.aspect_weight * aspect_score +
+            quality_cfg.brightness_weight * brightness_score
         )
         
         return quality_score
@@ -201,6 +211,9 @@ class FaceDetector:
         Returns:
             Dict with 'yaw', 'pitch', 'roll' estimates (in degrees)
         """
+        config = get_config()
+        angle_cfg = config.face_detection.angle
+        
         # Yaw (left-right rotation): Estimate based on face position
         # If face is centered, yaw is ~0
         center_x = face_x + face_width / 2
@@ -222,7 +235,9 @@ class FaceDetector:
             'yaw': float(yaw),
             'pitch': float(pitch),
             'roll': float(roll),
-            'is_valid': abs(yaw) <= 30 and abs(pitch) <= 30 and abs(roll) <= 15
+            'is_valid': abs(yaw) <= angle_cfg.max_yaw and 
+                       abs(pitch) <= angle_cfg.max_pitch and 
+                       abs(roll) <= angle_cfg.max_roll
         }
     
     def detect_and_align_with_quality(self, image_path, min_quality=0.5, require_valid_angle=True):
