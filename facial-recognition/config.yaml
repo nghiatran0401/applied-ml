@@ -55,13 +55,21 @@ face_detection:
 
 # Anti-Spoofing Settings
 anti_spoofing:
-  method: "heuristic" # Options: "heuristic" or "deepface"
+  method: "enhanced_heuristic" # Options: "heuristic", "enhanced_heuristic", or "deepface"
   confidence_threshold: 0.5 # Minimum confidence to consider face as real
 
-  # Heuristic method weights
-  sharpness_weight: 0.4
-  texture_weight: 0.4
-  color_weight: 0.2
+  # Enhanced heuristic method weights (more sophisticated)
+  sharpness_weight: 0.25
+  texture_weight: 0.25
+  color_weight: 0.15
+  frequency_weight: 0.15 # Frequency domain analysis
+  depth_weight: 0.10 # Depth/focus analysis
+  motion_blur_weight: 0.10 # Motion blur detection
+
+  # Legacy heuristic method weights (for backward compatibility)
+  legacy_sharpness_weight: 0.4
+  legacy_texture_weight: 0.4
+  legacy_color_weight: 0.2
 
   # Sharpness thresholds
   sharpness_threshold_high: 200.0
@@ -72,6 +80,12 @@ anti_spoofing:
   confidence_high: 0.9
   confidence_medium: 0.7
   confidence_low: 0.5
+
+  # Enhanced detection parameters
+  frequency_analysis_enabled: true
+  lbp_texture_enabled: true # Local Binary Pattern for better texture analysis
+  depth_estimation_enabled: true
+  motion_blur_detection_enabled: true
 
 # Emotion Detection Settings
 emotion_detection:

@@ -57,17 +57,34 @@ class FaceDetectionConfig(BaseModel):
 
 class AntiSpoofingConfig(BaseModel):
     """Anti-spoofing configuration"""
-    method: str = "heuristic"
+    method: str = "enhanced_heuristic"
     confidence_threshold: float = 0.5
-    sharpness_weight: float = 0.4
-    texture_weight: float = 0.4
-    color_weight: float = 0.2
+    
+    # Enhanced heuristic weights
+    sharpness_weight: float = 0.25
+    texture_weight: float = 0.25
+    color_weight: float = 0.15
+    frequency_weight: float = 0.15
+    depth_weight: float = 0.10
+    motion_blur_weight: float = 0.10
+    
+    # Legacy heuristic weights (for backward compatibility)
+    legacy_sharpness_weight: float = 0.4
+    legacy_texture_weight: float = 0.4
+    legacy_color_weight: float = 0.2
+    
     sharpness_threshold_high: float = 200.0
     sharpness_threshold_medium: float = 100.0
     sharpness_threshold_low: float = 50.0
     confidence_high: float = 0.9
     confidence_medium: float = 0.7
     confidence_low: float = 0.5
+    
+    # Enhanced detection flags
+    frequency_analysis_enabled: bool = True
+    lbp_texture_enabled: bool = True
+    depth_estimation_enabled: bool = True
+    motion_blur_detection_enabled: bool = True
 
 
 class EmotionDetectionConfig(BaseModel):
