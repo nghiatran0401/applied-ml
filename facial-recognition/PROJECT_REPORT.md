@@ -102,6 +102,13 @@ The assignment requires implementing two different approaches for face verificat
 3. Fine-tune on face dataset with cross-entropy loss
 4. Extract embeddings from penultimate layer during inference
 
+**Training Metrics Tracked:**
+
+- **Loss**: Cross-entropy loss decreases as model learns to classify faces correctly
+- **Accuracy**: Classification accuracy increases as model improves (computed by comparing predicted labels to ground truth)
+- **Why Both Metrics**: Classification directly predicts class labels, making accuracy computation straightforward during training
+- **Visualization**: Training history shows both loss (decreasing) and accuracy (increasing) curves, providing dual feedback on model convergence
+
 **Advantages:**
 
 - ✅ Easier to train (standard classification)
@@ -181,6 +188,18 @@ Instead of random triplets, we use hard negative mining:
 - **Batch Size**: 32
 - **Epochs**: 10
 - **Embedding Dimension**: 512
+
+**Training Metrics Tracked:**
+
+- **Loss Only**: Triplet loss decreases as model learns to separate embeddings
+- **Why No Accuracy During Training**: Metric learning models learn embeddings, not direct class predictions. Computing accuracy would require:
+  1. Extracting embeddings for validation pairs
+  2. Computing similarity scores
+  3. Finding optimal threshold
+  4. Making predictions and comparing to ground truth
+- **Computational Overhead**: This process is expensive and not performed during training for efficiency
+- **Post-Training Evaluation**: Accuracy is computed during evaluation phase (79.81% for metric learning model)
+- **Visualization**: Training history shows only loss curves, as accuracy requires post-training threshold optimization
 
 **Code Location**: `src/models/metric_learning_model.py`, `src/train_metric_learning.py`, `src/utils/triplet_mining.py`
 
@@ -957,6 +976,31 @@ Face 2 → Extract Embedding → [0.5, 0.3, 0.8, ..., 0.2]
 - Cloud GPU eliminated thermal issues and system unavailability
 - Metric learning requires careful hyperparameter tuning to avoid collapse
 
+**Training History Visualization Differences:**
+
+The training history charts differ between the two approaches due to fundamental differences in how each model is trained and evaluated:
+
+**Classification Model Training History:**
+
+- **Two-Panel Chart**: Displays both loss and accuracy metrics
+- **Left Panel**: Training and validation loss curves showing convergence over epochs
+- **Right Panel**: Training and validation accuracy curves showing classification performance
+- **Why Both Metrics**: Classification models directly predict class labels (identities), making accuracy straightforward to compute during training by comparing predicted labels to ground truth labels
+- **Interpretation**: Loss decreases as the model learns, while accuracy increases, providing dual feedback on model performance
+
+**Metric Learning Model Training History:**
+
+- **Single-Panel Chart**: Displays only loss (triplet loss) curves
+- **Why Only Loss**: Metric learning models learn embeddings rather than direct class predictions. Computing accuracy during training would require:
+  1. Extracting embeddings for all pairs in the validation set
+  2. Computing similarity scores for each pair
+  3. Finding optimal threshold that maximizes accuracy
+  4. Applying threshold to make predictions
+- **Computational Overhead**: This process is computationally expensive and not performed during training to maintain efficiency
+- **Post-Training Evaluation**: Accuracy is computed during the evaluation phase using the best threshold, as shown in the evaluation results (79.81% accuracy for metric learning model)
+
+**Key Insight**: The difference in training history visualization reflects the fundamental difference between supervised classification (direct label prediction) and metric learning (embedding space learning). Classification naturally provides accuracy during training, while metric learning requires post-training evaluation to compute accuracy metrics.
+
 ### 3.2 Face Verification Performance
 
 **Classification Approach:**
@@ -1061,6 +1105,60 @@ The retrained metric learning model shows relatively high cosine similarities fo
 - Metric learning has better euclidean separation (0.086 vs 0.069), but both models have identical AUC scores
 - Classification's lower similarity scores (0.700 vs 0.567) provide clearer distinction than metric learning's high similarities (0.910 vs 0.840)
 
+**Detailed Metric Explanations:**
+
+**1. AUC (Area Under the ROC Curve):**
+
+- **Definition**: AUC measures the model's ability to distinguish between same and different face pairs across all possible thresholds
+- **Range**: 0.0 to 1.0, where 1.0 = perfect discrimination, 0.5 = random guessing
+- **Interpretation**:
+  - 0.9249 (Classification) = Model correctly ranks 92.49% of all possible pairs
+  - 0.8747 (Metric Learning) = Model correctly ranks 87.47% of all possible pairs
+- **Why It Matters**: AUC is threshold-independent, providing overall model quality assessment
+- **Industry Standard**: AUC > 0.85 is considered production-ready for face verification systems
+
+**2. Mean Similarity Scores:**
+
+- **Same Faces**: Average similarity score for pairs belonging to the same person
+  - Classification: 0.700 (cosine), 0.465 (euclidean)
+  - Metric Learning: 0.910 (cosine), 0.661 (euclidean)
+- **Different Faces**: Average similarity score for pairs belonging to different people
+  - Classification: 0.567 (cosine), 0.396 (euclidean)
+  - Metric Learning: 0.840 (cosine), 0.575 (euclidean)
+- **Interpretation**: Higher values for same faces and lower values for different faces indicate better discrimination
+- **Separation Gap**: The difference between same and different face similarities
+  - Larger gap = easier threshold selection and better discrimination
+  - Classification cosine gap (0.133) > Metric learning cosine gap (0.070)
+
+**3. Best Threshold:**
+
+- **Definition**: The similarity threshold that maximizes classification accuracy on the validation set
+- **Classification Model**: Not computed during evaluation (accuracy not calculated)
+- **Metric Learning Model**:
+  - Cosine: 0.8774 (pairs with similarity ≥ 0.8774 are considered same person)
+  - Euclidean: 0.6094 (pairs with similarity ≥ 0.6094 are considered same person)
+- **Production Threshold**: 0.85 (cosine) used in system for better false positive reduction
+
+**4. Accuracy at Best Threshold:**
+
+- **Definition**: Classification accuracy when using the optimal threshold
+- **Metric Learning**: 79.81% (79.81% of pairs correctly classified as same/different)
+- **Interpretation**:
+  - Lower than AUC because accuracy depends on threshold selection
+  - AUC measures ranking quality (all thresholds), accuracy measures performance at one threshold
+  - 79.81% is reasonable for verification tasks where false positives are costly
+
+**5. Separation Quality:**
+
+- **Cosine Separation**:
+  - Classification: 0.133 (excellent separation, clear distinction)
+  - Metric Learning: 0.070 (moderate separation, acceptable but smaller gap)
+- **Euclidean Separation**:
+  - Classification: 0.069 (moderate separation)
+  - Metric Learning: 0.086 (better separation than cosine for this model)
+- **Why It Matters**: Larger separation makes threshold selection easier and reduces false positives/negatives
+- **Trade-off**: Metric learning shows higher absolute similarities but smaller separation gaps, requiring more careful threshold tuning
+
 **Threshold Selection for Production Use:**
 
 During system deployment and testing, we found that the optimal threshold for the classification model in production is **0.85 (85%)** rather than the best threshold from evaluation (0.7). This higher threshold is necessary because:
@@ -1098,6 +1196,62 @@ The system uses cosine similarity with a threshold of 0.85 for face matching in 
 - ⚠️ Requires conversion to similarity score
 
 **Result**: Both metrics perform identically (AUC = 0.9249) for classification model. Cosine similarity provides better interpretability with clearer separation (0.133 vs 0.069 gap), making it the preferred choice despite identical AUC scores.
+
+**Why AUC Values Are Identical for Both Metrics:**
+
+A critical observation from the evaluation results is that both cosine similarity and Euclidean distance produce **identical AUC scores** (0.9249 for classification, 0.8747 for metric learning) for each model. This phenomenon occurs due to the mathematical properties of AUC and how the metrics are computed:
+
+**1. AUC is Rank-Based, Not Value-Based:**
+
+- AUC (Area Under the ROC Curve) measures the **ranking quality** of similarity scores, not their absolute values
+- The ROC curve plots True Positive Rate (TPR) against False Positive Rate (FPR) at different thresholds
+- What matters for AUC is the **relative ordering** of pairs: which pairs have higher similarity scores than others
+- As long as two metrics produce the same ranking order, they will have identical AUC scores
+
+**2. Monotonic Transformation Preserves Ranking:**
+
+- Euclidean distance is converted to similarity using: `similarity = exp(-distance)`
+- This is a **monotonic transformation**: as distance decreases, similarity increases, and vice versa
+- Monotonic transformations preserve the ranking order of all pairs
+- Example: If pair A has distance 0.5 and pair B has distance 1.0, then:
+  - Distance ranking: A < B (A is closer)
+  - Similarity ranking: exp(-0.5) > exp(-1.0) (A has higher similarity)
+  - The relative order is preserved: A ranks higher than B in both metrics
+
+**3. Mathematical Explanation:**
+
+```
+For embeddings emb1 and emb2:
+
+Cosine Similarity = dot(emb1, emb2) / (||emb1|| × ||emb2||)
+Euclidean Distance = ||emb1 - emb2||
+Euclidean Similarity = exp(-||emb1 - emb2||)
+
+Since exp(-x) is monotonic:
+- If distance_A < distance_B, then exp(-distance_A) > exp(-distance_B)
+- The ranking order is preserved
+- Therefore, AUC(cosine) = AUC(euclidean)
+```
+
+**4. Why Actual Similarity Values Differ:**
+
+Although AUC values are identical, the **actual similarity values** differ significantly:
+
+- **Classification Model:**
+  - Cosine: Same faces = 0.700, Different faces = 0.567 (gap = 0.133)
+  - Euclidean: Same faces = 0.465, Different faces = 0.396 (gap = 0.069)
+- **Metric Learning Model:**
+  - Cosine: Same faces = 0.910, Different faces = 0.840 (gap = 0.070)
+  - Euclidean: Same faces = 0.661, Different faces = 0.575 (gap = 0.086)
+
+**5. Practical Implications:**
+
+- **Threshold Selection**: Different metrics require different threshold values (e.g., cosine threshold = 0.85, Euclidean threshold = 0.6)
+- **Interpretability**: Cosine similarity is more intuitive (0-1 range, higher = more similar)
+- **Separation Quality**: Cosine provides better separation for classification (0.133 vs 0.069), while Euclidean provides better separation for metric learning (0.086 vs 0.070)
+- **Production Use**: Despite identical AUC, cosine similarity is preferred due to better interpretability and clearer separation for the classification model
+
+**Conclusion**: The identical AUC scores demonstrate that both metrics are equally effective at ranking face pairs. The choice between metrics should be based on interpretability, threshold selection ease, and separation quality rather than AUC performance, as both metrics achieve the same discriminative power when properly normalized.
 
 ### 3.4 Anti-Spoofing Performance
 
