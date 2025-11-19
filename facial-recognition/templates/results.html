@@ -273,6 +273,22 @@
           <h2 class="section-title">Model Comparison</h2>
           <div id="comparisonTable"></div>
         </div>
+
+        <!-- Anti-Spoofing Metrics -->
+        <div class="section">
+          <h2 class="section-title">Anti-Spoofing (Liveness Detection) Metrics</h2>
+          <div id="antiSpoofingMetrics" class="metrics-grid"></div>
+          <div id="antiSpoofingInfo" class="info-box" style="margin-top: 20px; display: none">
+            <p><strong>Note:</strong> These metrics are calculated from real attendance logs. Low confidence scores may indicate potential spoofing attempts.</p>
+          </div>
+        </div>
+
+        <!-- Emotion Detection Metrics -->
+        <div class="section">
+          <h2 class="section-title">Emotion Detection Metrics</h2>
+          <div id="emotionDetectionMetrics" class="metrics-grid"></div>
+          <div id="emotionDistribution" style="margin-top: 20px"></div>
+        </div>
       </div>
     </div>
 
@@ -302,6 +318,16 @@
           // Display comparison
           if (data.classification && data.metric_learning) {
             displayComparison(data.classification, data.metric_learning);
+          }
+
+          // Display anti-spoofing metrics
+          if (data.anti_spoofing) {
+            displayAntiSpoofingMetrics(data.anti_spoofing);
+          }
+
+          // Display emotion detection metrics
+          if (data.emotion_detection) {
+            displayEmotionDetectionMetrics(data.emotion_detection);
           }
         } catch (error) {
           document.getElementById("loading").style.display = "none";
@@ -748,6 +774,149 @@
         `;
 
         comparisonDiv.innerHTML = tableHTML;
+      }
+
+      function displayAntiSpoofingMetrics(metrics) {
+        const metricsDiv = document.getElementById("antiSpoofingMetrics");
+        const infoBox = document.getElementById("antiSpoofingInfo");
+
+        if (!metrics || metrics.total_checks === 0) {
+          metricsDiv.innerHTML = '<div class="info-box"><p>No anti-spoofing data available yet. Metrics will appear after attendance checks are performed.</p></div>';
+          return;
+        }
+
+        infoBox.style.display = "block";
+
+        let html = `
+          <div class="metric-card ${metrics.average_liveness_confidence >= 0.8 ? "excellent" : metrics.average_liveness_confidence >= 0.6 ? "good" : "warning"}">
+            <div class="metric-label">Average Liveness Confidence</div>
+            <div class="metric-value">${formatNumber(metrics.average_liveness_confidence, 4)}</div>
+            <div class="metric-description">Mean confidence across all checks</div>
+          </div>
+          <div class="metric-card excellent">
+            <div class="metric-label">Total Checks</div>
+            <div class="metric-value">${metrics.total_checks.toLocaleString()}</div>
+            <div class="metric-description">Total liveness verifications performed</div>
+          </div>
+          <div class="metric-card excellent">
+            <div class="metric-label">High Confidence</div>
+            <div class="metric-value">${formatPercent(metrics.high_confidence_percentage / 100)}</div>
+            <div class="metric-description">${metrics.high_confidence_count} checks (≥0.8 confidence)</div>
+          </div>
+          <div class="metric-card good">
+            <div class="metric-label">Medium Confidence</div>
+            <div class="metric-value">${formatPercent(metrics.medium_confidence_percentage / 100)}</div>
+            <div class="metric-description">${metrics.medium_confidence_count} checks (0.5-0.8 confidence)</div>
+          </div>
+          <div class="metric-card ${metrics.low_confidence_percentage > 10 ? "warning" : "good"}">
+            <div class="metric-label">Low Confidence</div>
+            <div class="metric-value">${formatPercent(metrics.low_confidence_percentage / 100)}</div>
+            <div class="metric-description">${metrics.low_confidence_count} checks (<0.5 confidence)</div>
+          </div>
+          <div class="metric-card ${metrics.spoofing_rate < 5 ? "excellent" : metrics.spoofing_rate < 10 ? "good" : "warning"}">
+            <div class="metric-label">Potential Spoofing Rate</div>
+            <div class="metric-value">${formatPercent(metrics.spoofing_rate / 100)}</div>
+            <div class="metric-description">${metrics.spoofing_attempts} low-confidence checks</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Min Liveness Score</div>
+            <div class="metric-value">${formatNumber(metrics.min_liveness, 4)}</div>
+            <div class="metric-description">Lowest confidence recorded</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Max Liveness Score</div>
+            <div class="metric-value">${formatNumber(metrics.max_liveness, 4)}</div>
+            <div class="metric-description">Highest confidence recorded</div>
+          </div>
+        `;
+
+        metricsDiv.innerHTML = html;
+      }
+
+      function displayEmotionDetectionMetrics(metrics) {
+        const metricsDiv = document.getElementById("emotionDetectionMetrics");
+        const distributionDiv = document.getElementById("emotionDistribution");
+
+        if (!metrics || metrics.total_detections === 0) {
+          metricsDiv.innerHTML = '<div class="info-box"><p>No emotion detection data available yet. Metrics will appear after attendance checks are performed.</p></div>';
+          return;
+        }
+
+        let html = `
+          <div class="metric-card excellent">
+            <div class="metric-label">Total Detections</div>
+            <div class="metric-value">${metrics.total_detections.toLocaleString()}</div>
+            <div class="metric-description">Total emotion detections performed</div>
+          </div>
+          <div class="metric-card good">
+            <div class="metric-label">Unique Emotions</div>
+            <div class="metric-value">${metrics.unique_emotions_detected}</div>
+            <div class="metric-description">Different emotions detected</div>
+          </div>
+          <div class="metric-card excellent">
+            <div class="metric-label">Most Common Emotion</div>
+            <div class="metric-value" style="text-transform: capitalize; font-size: 24px;">${metrics.most_common_emotion}</div>
+            <div class="metric-description">${formatPercent(metrics.emotion_distribution[metrics.most_common_emotion].percentage / 100)} of all detections</div>
+          </div>
+        `;
+
+        metricsDiv.innerHTML = html;
+
+        // Display emotion distribution table
+        let distributionHTML = `
+          <h3 style="font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #e1e8ed;">Emotion Distribution</h3>
+          <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>Emotion</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                  <th>Visual</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        // Sort emotions by count (descending)
+        const sortedEmotions = Object.entries(metrics.emotion_distribution).sort((a, b) => b[1].count - a[1].count);
+
+        for (const [emotion, data] of sortedEmotions) {
+          const percentage = data.percentage;
+          const barWidth = Math.max(percentage, 5); // Minimum 5% width for visibility
+
+          distributionHTML += `
+            <tr>
+              <td style="text-transform: capitalize; font-weight: 500;">${emotion}</td>
+              <td>${data.count.toLocaleString()}</td>
+              <td>${formatPercent(percentage / 100)}</td>
+              <td>
+                <div style="background: #e1e8ed; border-radius: 4px; height: 20px; width: 100%; position: relative; overflow: hidden;">
+                  <div style="background: ${getEmotionColor(emotion)}; height: 100%; width: ${barWidth}%; transition: width 0.3s;"></div>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+
+        distributionHTML += `
+              </tbody>
+            </table>
+        `;
+
+        distributionDiv.innerHTML = distributionHTML;
+      }
+
+      function getEmotionColor(emotion) {
+        const colors = {
+          happy: "#28a745",
+          sad: "#17a2b8",
+          angry: "#dc3545",
+          surprise: "#ffc107",
+          fear: "#6f42c1",
+          disgust: "#fd7e14",
+          neutral: "#6c757d",
+        };
+        return colors[emotion.toLowerCase()] || "#0066cc";
       }
 
       // Load results on page load

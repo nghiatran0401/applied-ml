@@ -999,7 +999,9 @@ async def get_model_results():
     """Get all model results and metrics"""
     results = {
         "classification": None,
-        "metric_learning": None
+        "metric_learning": None,
+        "anti_spoofing": None,
+        "emotion_detection": None
     }
     
     # Load classification results
@@ -1049,6 +1051,65 @@ async def get_model_results():
     training_info_ml = parse_training_log(metric_learning_log_path)
     if training_info_ml and results["metric_learning"]:
         results["metric_learning"]["training_info"] = training_info_ml
+    
+    # Calculate anti-spoofing and emotion detection metrics from attendance logs
+    try:
+        from src.utils.attendance_logger import AttendanceLogger
+        from src.utils.config import get_config
+        
+        config = get_config()
+        attendance_logger = AttendanceLogger(config.database.attendance_logs_path)
+        logs = attendance_logger.logs
+        
+        if logs:
+            # Anti-Spoofing Metrics
+            liveness_scores = [log.get("liveness_score", 0.0) for log in logs if log.get("liveness_score") is not None]
+            
+            if liveness_scores:
+                avg_liveness = sum(liveness_scores) / len(liveness_scores)
+                high_confidence = sum(1 for s in liveness_scores if s >= 0.8)
+                medium_confidence = sum(1 for s in liveness_scores if 0.5 <= s < 0.8)
+                low_confidence = sum(1 for s in liveness_scores if s < 0.5)
+                total_checks = len(liveness_scores)
+                
+                results["anti_spoofing"] = {
+                    "total_checks": total_checks,
+                    "average_liveness_confidence": float(avg_liveness),
+                    "high_confidence_count": high_confidence,
+                    "medium_confidence_count": medium_confidence,
+                    "low_confidence_count": low_confidence,
+                    "high_confidence_percentage": float(high_confidence / total_checks * 100) if total_checks > 0 else 0.0,
+                    "medium_confidence_percentage": float(medium_confidence / total_checks * 100) if total_checks > 0 else 0.0,
+                    "low_confidence_percentage": float(low_confidence / total_checks * 100) if total_checks > 0 else 0.0,
+                    "min_liveness": float(min(liveness_scores)),
+                    "max_liveness": float(max(liveness_scores)),
+                    "spoofing_attempts": low_confidence,  # Low confidence might indicate spoofing
+                    "spoofing_rate": float(low_confidence / total_checks * 100) if total_checks > 0 else 0.0
+                }
+            
+            # Emotion Detection Metrics
+            emotions = [log.get("emotion", "unknown") for log in logs if log.get("emotion")]
+            
+            if emotions:
+                emotion_counts = {}
+                for emotion in emotions:
+                    emotion_counts[emotion] = emotion_counts.get(emotion, 0) + 1
+                
+                total_emotions = len(emotions)
+                most_common_emotion = max(emotion_counts.items(), key=lambda x: x[1])[0] if emotion_counts else "unknown"
+                
+                results["emotion_detection"] = {
+                    "total_detections": total_emotions,
+                    "emotion_distribution": {k: {
+                        "count": v,
+                        "percentage": float(v / total_emotions * 100) if total_emotions > 0 else 0.0
+                    } for k, v in emotion_counts.items()},
+                    "most_common_emotion": most_common_emotion,
+                    "unique_emotions_detected": len(emotion_counts),
+                    "emotion_list": list(emotion_counts.keys())
+                }
+    except Exception as e:
+        logger.error(f"Error calculating anti-spoofing/emotion metrics: {e}")
     
     return JSONResponse(results)
 
