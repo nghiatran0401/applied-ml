@@ -1,0 +1,30 @@
+# Core ML Framework
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Face Detection & Recognition
+facenet-pytorch>=2.5.3
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# UI Framework
+streamlit>=1.28.0
+
+# Evaluation & Visualization
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Data Handling
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Emotion Detection
+fer>=22.5.0
+
+# Anti-Spoofing (Alternative)
+deepface>=0.0.79
+
+# Utilities
+tqdm>=4.66.0
+scipy>=1.11.0
