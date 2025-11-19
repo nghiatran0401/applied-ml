@@ -281,6 +281,169 @@
       .result-card.error {
         border-left: 4px solid #dc3545;
       }
+
+      /* Progress Indicator */
+      .progress-container {
+        display: none;
+        margin: 20px 0;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        text-align: center;
+      }
+      .progress-container.active {
+        display: block;
+      }
+      .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #0066cc;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 12px;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .progress-text {
+        color: #495057;
+        font-size: 14px;
+        margin-top: 8px;
+      }
+      .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 16px;
+        font-size: 12px;
+        color: #6c757d;
+      }
+      .progress-step {
+        flex: 1;
+        padding: 8px;
+        border-radius: 4px;
+        transition: all 0.3s;
+      }
+      .progress-step.active {
+        background: #e7f3ff;
+        color: #0066cc;
+        font-weight: 600;
+      }
+      .progress-step.completed {
+        color: #28a745;
+      }
+
+      /* Retry Button */
+      .retry-button {
+        margin-top: 16px;
+        padding: 10px 20px;
+        background: #0066cc;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+      .retry-button:hover {
+        background: #0052a3;
+      }
+      .retry-button:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+      }
+
+      /* Enhanced Error Messages */
+      .error-details {
+        margin-top: 12px;
+        padding: 12px;
+        background: #fff3cd;
+        border-left: 3px solid #ffc107;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      .error-suggestions {
+        margin-top: 8px;
+        padding-left: 16px;
+      }
+      .error-suggestions li {
+        margin: 4px 0;
+        color: #856404;
+      }
+
+      /* Toast Notifications */
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        max-width: 400px;
+      }
+      .toast {
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        padding: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideIn 0.3s ease-out;
+        border-left: 4px solid #0066cc;
+      }
+      .toast.success {
+        border-left-color: #28a745;
+      }
+      .toast.error {
+        border-left-color: #dc3545;
+      }
+      .toast.warning {
+        border-left-color: #ffc107;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      .toast-icon {
+        font-size: 20px;
+      }
+      .toast-content {
+        flex: 1;
+      }
+      .toast-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+      .toast-message {
+        font-size: 13px;
+        color: #6c757d;
+      }
+      .toast-close {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        color: #6c757d;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       .result-card.warning {
         border-left: 4px solid #ffc107;
       }
@@ -758,6 +921,8 @@
         canvas.toBlob(
           async (blob) => {
             const file = new File([blob], `capture_${Date.now()}.jpg`, { type: "image/jpeg" });
+            lastVerificationFile = file;
+            verificationRetryCount = 0;
 
             // Stop camera
             if (stream) {
@@ -796,33 +961,200 @@
         resultsDiv.innerHTML = "";
       });
 
-      async function verifyImage(file) {
+      // Toast notification system
+      function showToast(type, title, message, duration = 5000) {
+        const container = document.getElementById("toastContainer") || createToastContainer();
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+
+        const icons = {
+          success: "✓",
+          error: "✕",
+          warning: "⚠",
+          info: "ℹ",
+        };
+
+        toast.innerHTML = `
+          <div class="toast-icon">${icons[type] || icons.info}</div>
+          <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+          </div>
+          <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+        `;
+
+        container.appendChild(toast);
+
+        if (duration > 0) {
+          setTimeout(() => {
+            toast.style.animation = "slideIn 0.3s ease-out reverse";
+            setTimeout(() => toast.remove(), 300);
+          }, duration);
+        }
+      }
+
+      function createToastContainer() {
+        const container = document.createElement("div");
+        container.id = "toastContainer";
+        container.className = "toast-container";
+        document.body.appendChild(container);
+        return container;
+      }
+
+      // Enhanced error message generator
+      function getErrorDetails(error) {
+        const errorMessages = {
+          "No face detected": {
+            title: "Face Not Detected",
+            suggestions: [
+              "Ensure your face is clearly visible in the frame",
+              "Move closer to the camera",
+              "Make sure there is adequate lighting",
+              "Remove any face coverings (masks, sunglasses)",
+              "Look directly at the camera",
+            ],
+          },
+          "Image quality too low": {
+            title: "Image Quality Issue",
+            suggestions: ["Improve lighting in your environment", "Hold the camera steady", "Move to a well-lit area", "Clean the camera lens", "Ensure your face is in focus"],
+          },
+          "Face angle is too extreme": {
+            title: "Face Angle Issue",
+            suggestions: ["Face the camera directly", "Keep your head straight", "Avoid tilting your head", "Look straight ahead"],
+          },
+          Network: {
+            title: "Connection Error",
+            suggestions: ["Check your internet connection", "Try again in a few moments", "Refresh the page if the problem persists"],
+          },
+        };
+
+        for (const [key, value] of Object.entries(errorMessages)) {
+          if (error.includes(key)) {
+            return value;
+          }
+        }
+
+        return {
+          title: "An Error Occurred",
+          suggestions: ["Please try again", "Check your connection", "Ensure the image is valid"],
+        };
+      }
+
+      async function verifyImage(file, retryCount = 0) {
         if (!file) return;
+
+        // Show progress indicator
+        const progressHtml = `
+          <div class="progress-container active">
+            <div class="spinner"></div>
+            <div class="progress-text">Processing your image...</div>
+            <div class="progress-steps">
+              <div class="progress-step active">Detecting Face</div>
+              <div class="progress-step">Checking Quality</div>
+              <div class="progress-step">Verifying Identity</div>
+            </div>
+          </div>
+        `;
+        resultsDiv.innerHTML = progressHtml;
 
         statusMessage.className = "status-message info";
         statusMessage.textContent = "Processing...";
-        resultsDiv.innerHTML = '<div class="result-card"><h3>Processing</h3><p>Please wait while we verify your identity...</p></div>';
 
         const formData = new FormData();
         formData.append("image", file);
 
         try {
+          // Update progress
+          setTimeout(() => {
+            const steps = resultsDiv.querySelectorAll(".progress-step");
+            if (steps[1]) {
+              steps[0].classList.add("completed");
+              steps[1].classList.add("active");
+            }
+          }, 500);
+
           const response = await fetch("/api/verify", {
             method: "POST",
             body: formData,
           });
 
+          // Update progress
+          setTimeout(() => {
+            const steps = resultsDiv.querySelectorAll(".progress-step");
+            if (steps[2]) {
+              steps[1].classList.add("completed");
+              steps[2].classList.add("active");
+            }
+          }, 1000);
+
           const data = await response.json();
 
           if (data.error) {
-            resultsDiv.innerHTML = `<div class="result-card error"><h3>Error</h3><p>${data.error}</p></div>`;
+            const errorDetails = getErrorDetails(data.error);
+            const errorHtml = `
+              <div class="result-card error">
+                <h3>${errorDetails.title}</h3>
+                <p>${data.error}</p>
+                <div class="error-details">
+                  <strong>Suggestions:</strong>
+                  <ul class="error-suggestions">
+                    ${errorDetails.suggestions.map((s) => `<li>${s}</li>`).join("")}
+                  </ul>
+                </div>
+                ${
+                  retryCount < 2
+                    ? `
+                  <button class="retry-button" onclick="retryVerification()">
+                    Try Again ${retryCount > 0 ? `(${retryCount + 1}/3)` : ""}
+                  </button>
+                `
+                    : ""
+                }
+              </div>
+            `;
+            resultsDiv.innerHTML = errorHtml;
+            showToast("error", errorDetails.title, data.error);
           } else {
             displayResults(data);
+            showToast("success", "Verification Complete", data.match_found ? `Welcome, ${data.person_name}!` : "Face verified but not recognized");
           }
         } catch (error) {
-          resultsDiv.innerHTML = `<div class="result-card error"><h3>Error</h3><p>${error.message}</p></div>`;
+          const errorDetails = getErrorDetails("Network");
+          const errorHtml = `
+            <div class="result-card error">
+              <h3>${errorDetails.title}</h3>
+              <p>${error.message || "Network error occurred"}</p>
+              <div class="error-details">
+                <strong>Suggestions:</strong>
+                <ul class="error-suggestions">
+                  ${errorDetails.suggestions.map((s) => `<li>${s}</li>`).join("")}
+                </ul>
+              </div>
+              ${
+                retryCount < 2
+                  ? `
+                <button class="retry-button" onclick="retryVerification()">
+                  Retry ${retryCount > 0 ? `(${retryCount + 1}/3)` : ""}
+                </button>
+              `
+                  : ""
+              }
+            </div>
+          `;
+          resultsDiv.innerHTML = errorHtml;
+          showToast("error", "Connection Error", error.message || "Failed to connect to server");
         }
       }
+
+      let lastVerificationFile = null;
+      let verificationRetryCount = 0;
+
+      window.retryVerification = function () {
+        if (lastVerificationFile) {
+          verificationRetryCount++;
+          verifyImage(lastVerificationFile, verificationRetryCount);
+        }
+      };
 
       function getVietnamTime() {
         const now = new Date();

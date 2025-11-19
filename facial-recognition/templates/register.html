@@ -296,6 +296,97 @@
         color: #721c24;
         border: 1px solid #f5c6cb;
       }
+
+      /* Progress Indicator */
+      .progress-container {
+        display: none;
+        margin: 20px 0;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        text-align: center;
+      }
+      .progress-container.active {
+        display: block;
+      }
+      .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #0066cc;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 12px;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .progress-text {
+        color: #495057;
+        font-size: 14px;
+        margin-top: 8px;
+      }
+      .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 16px;
+        font-size: 12px;
+        color: #6c757d;
+      }
+      .progress-step {
+        flex: 1;
+        padding: 8px;
+        border-radius: 4px;
+        transition: all 0.3s;
+      }
+      .progress-step.active {
+        background: #e7f3ff;
+        color: #0066cc;
+        font-weight: 600;
+      }
+      .progress-step.completed {
+        color: #28a745;
+      }
+
+      /* Retry Button */
+      .retry-button {
+        margin-top: 16px;
+        padding: 10px 20px;
+        background: #0066cc;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+      .retry-button:hover {
+        background: #0052a3;
+      }
+
+      /* Enhanced Error Messages */
+      .error-details {
+        margin-top: 12px;
+        padding: 12px;
+        background: #fff3cd;
+        border-left: 3px solid #ffc107;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      .error-suggestions {
+        margin-top: 8px;
+        padding-left: 16px;
+      }
+      .error-suggestions li {
+        margin: 4px 0;
+        color: #856404;
+      }
       .database-section {
         background: #ffffff;
         border: 1px solid #e1e8ed;
@@ -629,33 +720,91 @@
         }
       });
 
-      form.addEventListener("submit", async function (e) {
-        e.preventDefault();
+      // Enhanced error message generator for registration
+      function getRegistrationErrorDetails(error) {
+        const errorMessages = {
+          "already registered": {
+            title: "Employee Already Exists",
+            suggestions: ["This employee name is already in the system", "Use a different name or check the database", "Delete the existing entry if you want to re-register"],
+          },
+          "No valid faces detected": {
+            title: "Face Detection Failed",
+            suggestions: ["Ensure faces are clearly visible in all photos", "Take photos in good lighting", "Make sure faces are facing the camera directly", "Remove any face coverings", "Try capturing more photos"],
+          },
+          "already registered as": {
+            title: "Duplicate Face Detected",
+            suggestions: ["This face is already registered in the system", "Check the employee database", "The same person cannot be registered twice"],
+          },
+          Network: {
+            title: "Connection Error",
+            suggestions: ["Check your internet connection", "Try again in a few moments", "Refresh the page if the problem persists"],
+          },
+        };
 
+        for (const [key, value] of Object.entries(errorMessages)) {
+          if (error.toLowerCase().includes(key)) {
+            return value;
+          }
+        }
+
+        return {
+          title: "Registration Failed",
+          suggestions: ["Please try again", "Check your connection", "Ensure all photos are valid"],
+        };
+      }
+
+      let registrationRetryCount = 0;
+      let lastRegistrationData = null;
+
+      window.retryRegistration = function () {
+        if (lastRegistrationData) {
+          registrationRetryCount++;
+          submitRegistrationForm(lastRegistrationData, registrationRetryCount);
+        }
+      };
+
+      async function submitRegistrationForm(formData, retryCount = 0) {
         const submitBtn = document.getElementById("submitBtn");
         submitBtn.disabled = true;
         submitBtn.textContent = "Processing...";
-        messageDiv.innerHTML = "";
 
-        const formData = new FormData();
-        formData.append("name", document.getElementById("name").value);
-
-        if (capturedPhotos.length === 0) {
-          messageDiv.innerHTML = `<div class="message error">Please capture at least one photo using the camera</div>`;
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Register Employee";
-          return;
-        }
-
-        for (let i = 0; i < capturedPhotos.length; i++) {
-          formData.append("images", capturedPhotos[i]);
-        }
+        // Show progress indicator
+        const progressHtml = `
+          <div class="progress-container active">
+            <div class="spinner"></div>
+            <div class="progress-text">Registering employee...</div>
+            <div class="progress-steps">
+              <div class="progress-step active">Validating Photos</div>
+              <div class="progress-step">Extracting Features</div>
+              <div class="progress-step">Saving to Database</div>
+            </div>
+          </div>
+        `;
+        messageDiv.innerHTML = progressHtml;
 
         try {
+          // Update progress
+          setTimeout(() => {
+            const steps = messageDiv.querySelectorAll(".progress-step");
+            if (steps[1]) {
+              steps[0].classList.add("completed");
+              steps[1].classList.add("active");
+            }
+          }, 500);
+
           const response = await fetch("/api/register", {
             method: "POST",
             body: formData,
           });
+
+          // Update progress
+          setTimeout(() => {
+            const steps = messageDiv.querySelectorAll(".progress-step");
+            if (steps[2]) {
+              steps[1].classList.add("completed");
+              steps[2].classList.add("active");
+            }
+          }, 1000);
 
           const data = await response.json();
 
@@ -678,14 +827,84 @@
               window.location.reload();
             }, 1500);
           } else {
-            messageDiv.innerHTML = `<div class="message error">Error: ${data.error || "Registration failed"}</div>`;
+            const errorDetails = getRegistrationErrorDetails(data.error || "Registration failed");
+            const errorHtml = `
+              <div class="message error">
+                <strong>${errorDetails.title}</strong>
+                <p>${data.error || "Registration failed"}</p>
+                <div class="error-details">
+                  <strong>Suggestions:</strong>
+                  <ul class="error-suggestions">
+                    ${errorDetails.suggestions.map((s) => `<li>${s}</li>`).join("")}
+                  </ul>
+                </div>
+                ${
+                  retryCount < 2
+                    ? `
+                  <button class="retry-button" onclick="retryRegistration()">
+                    Try Again ${retryCount > 0 ? `(${retryCount + 1}/3)` : ""}
+                  </button>
+                `
+                    : ""
+                }
+              </div>
+            `;
+            messageDiv.innerHTML = errorHtml;
           }
         } catch (error) {
-          messageDiv.innerHTML = `<div class="message error">Error: ${error.message}</div>`;
+          const errorDetails = getRegistrationErrorDetails("Network");
+          const errorHtml = `
+            <div class="message error">
+              <strong>${errorDetails.title}</strong>
+              <p>${error.message || "Network error occurred"}</p>
+              <div class="error-details">
+                <strong>Suggestions:</strong>
+                <ul class="error-suggestions">
+                  ${errorDetails.suggestions.map((s) => `<li>${s}</li>`).join("")}
+                </ul>
+              </div>
+              ${
+                retryCount < 2
+                  ? `
+                <button class="retry-button" onclick="retryRegistration()">
+                  Retry ${retryCount > 0 ? `(${retryCount + 1}/3)` : ""}
+                </button>
+              `
+                  : ""
+              }
+            </div>
+          `;
+          messageDiv.innerHTML = errorHtml;
         } finally {
           submitBtn.disabled = false;
           submitBtn.textContent = "Register Employee";
         }
+      }
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const name = document.getElementById("name").value;
+        if (!name.trim()) {
+          messageDiv.innerHTML = `<div class="message error">Please enter an employee name</div>`;
+          return;
+        }
+
+        if (capturedPhotos.length === 0) {
+          messageDiv.innerHTML = `<div class="message error">Please capture at least one photo using the camera</div>`;
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("name", name);
+
+        for (let i = 0; i < capturedPhotos.length; i++) {
+          formData.append("images", capturedPhotos[i]);
+        }
+
+        lastRegistrationData = formData;
+        registrationRetryCount = 0;
+        await submitRegistrationForm(formData);
       });
 
       async function deletePerson(personId, personName) {
