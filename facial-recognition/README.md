@@ -56,7 +56,7 @@ Build an end-to-end face recognition attendance system for enterprise use with:
 - **Registration Mode**: Register new face IDs
 - **Verification Mode**: Check if person is registered
 - Display: Identity, Emotion, Liveness status, Confidence scores
-- Use Streamlit/Gradio for easy GUI development
+- Use FastAPI for web-based GUI development
 
 ### 5. Project Report (20 marks - Target: 16/20)
 
@@ -73,7 +73,7 @@ Build an end-to-end face recognition attendance system for enterprise use with:
 ## 🏗️ System Architecture
 
 ```
-User Interface (Streamlit)
+User Interface (FastAPI Web App)
     ↓
 Face Detection (MTCNN/RetinaFace)
     ↓
@@ -144,7 +144,7 @@ facial-recognition/
 │   ├── train_metric_learning.py
 │   ├── evaluate_classification.py
 │   ├── evaluate_metric_learning.py
-│   └── app.py                # Streamlit UI
+│   └── app_fastapi.py         # FastAPI web application
 ├── models/                   # Saved trained models
 ├── results/                  # ROC curves, evaluation results
 ├── training.log              # Training logs
@@ -280,8 +280,13 @@ python src/evaluate_metric_learning.py \
 ### 6. Run User Interface
 
 ```bash
-# Start Streamlit app
-streamlit run src/app.py
+# Start FastAPI web application
+python3 src/app_fastapi.py
+
+# Or use the convenience script
+./run_app.sh
+
+# Then open your browser to: http://localhost:8501
 ```
 
 The UI includes:
@@ -320,7 +325,7 @@ The UI includes:
 
 ### User Interface
 
-- **Streamlit** (easiest) - Quick to build, good for ML demos
+- **FastAPI** - Modern, fast, production-ready web framework with automatic API documentation
 
 ### Database
 
@@ -390,7 +395,7 @@ The UI includes:
 
 ### Phase 6: User Interface (Days 15-17)
 
-- [ ] Build Streamlit GUI
+- [ ] Build FastAPI web interface
 - [ ] Implement registration mode
 - [ ] Implement verification mode
 - [ ] Display results (identity, emotion, liveness)
@@ -641,7 +646,7 @@ python3 src/train_classification.py --data_dir classification_data --save_dir mo
 1. **Get classification approach working well** (easier, high ROI)
 2. **Get basic metric learning working** (moderate effort)
 3. **Use pre-trained models for anti-spoofing and emotion** (easy, saves time)
-4. **Build simple but functional GUI** (easy, Streamlit is quick)
+4. **Build simple but functional web interface** (FastAPI with HTML templates)
 5. **Write clear, comprehensive report** (document as you build)
 
 **Estimated Total Time**: 24 days (with buffer for debugging and improvements)
