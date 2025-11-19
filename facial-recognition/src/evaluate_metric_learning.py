@@ -19,7 +19,9 @@ from tqdm import tqdm
 
 from src.models.metric_learning_model import create_embedding_model
 from src.utils.data_loader import FaceVerificationDataset, get_transforms
-from src.utils.evaluation import evaluate_verification_pairs, plot_roc_curve
+from src.utils.evaluation import plot_roc_curve, compute_similarity
+from sklearn.metrics import roc_curve, auc, accuracy_score
+import numpy as np
 import json
 
 
@@ -104,7 +106,6 @@ def evaluate_metric_learning_model(
                 e2 = emb2[i].cpu().numpy()
                 
                 # Cosine similarity
-                from src.utils.evaluation import compute_similarity
                 sim_cosine = compute_similarity(e1, e2, metric='cosine')
                 sim_euclidean = compute_similarity(e1, e2, metric='euclidean')
                 
@@ -112,16 +113,55 @@ def evaluate_metric_learning_model(
                 similarities_euclidean.append(sim_euclidean)
                 labels.append(label[i].item())
     
-    # Evaluate
+    # Convert to numpy arrays
+    similarities_cosine = np.array(similarities_cosine)
+    similarities_euclidean = np.array(similarities_euclidean)
+    labels = np.array(labels)
+    
+    # Compute ROC curves and AUC
     print("\nEvaluating with Cosine Similarity...")
-    results_cosine = evaluate_verification_pairs(
-        similarities_cosine, labels, metric_name='Cosine'
-    )
+    fpr_cosine, tpr_cosine, thresholds_cosine = roc_curve(labels, similarities_cosine)
+    auc_cosine = auc(fpr_cosine, tpr_cosine)
+    
+    # Find best threshold (maximizes accuracy)
+    accuracies_cosine = []
+    for threshold in thresholds_cosine:
+        predictions = (similarities_cosine >= threshold).astype(int)
+        acc = accuracy_score(labels, predictions)
+        accuracies_cosine.append(acc)
+    best_idx_cosine = np.argmax(accuracies_cosine)
+    best_threshold_cosine = thresholds_cosine[best_idx_cosine]
+    best_accuracy_cosine = accuracies_cosine[best_idx_cosine]
+    
+    results_cosine = {
+        'auc': float(auc_cosine),
+        'best_threshold': float(best_threshold_cosine),
+        'accuracy': float(best_accuracy_cosine),
+        'mean_similarity_same': float(similarities_cosine[labels == 1].mean()),
+        'mean_similarity_different': float(similarities_cosine[labels == 0].mean())
+    }
     
     print("\nEvaluating with Euclidean Distance...")
-    results_euclidean = evaluate_verification_pairs(
-        similarities_euclidean, labels, metric_name='Euclidean'
-    )
+    fpr_euclidean, tpr_euclidean, thresholds_euclidean = roc_curve(labels, similarities_euclidean)
+    auc_euclidean = auc(fpr_euclidean, tpr_euclidean)
+    
+    # Find best threshold
+    accuracies_euclidean = []
+    for threshold in thresholds_euclidean:
+        predictions = (similarities_euclidean >= threshold).astype(int)
+        acc = accuracy_score(labels, predictions)
+        accuracies_euclidean.append(acc)
+    best_idx_euclidean = np.argmax(accuracies_euclidean)
+    best_threshold_euclidean = thresholds_euclidean[best_idx_euclidean]
+    best_accuracy_euclidean = accuracies_euclidean[best_idx_euclidean]
+    
+    results_euclidean = {
+        'auc': float(auc_euclidean),
+        'best_threshold': float(best_threshold_euclidean),
+        'accuracy': float(best_accuracy_euclidean),
+        'mean_similarity_same': float(similarities_euclidean[labels == 1].mean()),
+        'mean_similarity_different': float(similarities_euclidean[labels == 0].mean())
+    }
     
     # Create save directory
     os.makedirs(save_dir, exist_ok=True)
@@ -129,13 +169,13 @@ def evaluate_metric_learning_model(
     # Plot ROC curves
     print("\nPlotting ROC curves...")
     plot_roc_curve(
-        similarities_cosine, labels,
+        fpr_cosine, tpr_cosine, auc_cosine,
         save_path=os.path.join(save_dir, 'metric_learning_roc_cosine.png'),
         title='ROC Curve - Metric Learning (Cosine Similarity)'
     )
     
     plot_roc_curve(
-        similarities_euclidean, labels,
+        fpr_euclidean, tpr_euclidean, auc_euclidean,
         save_path=os.path.join(save_dir, 'metric_learning_roc_euclidean.png'),
         title='ROC Curve - Metric Learning (Euclidean Distance)'
     )

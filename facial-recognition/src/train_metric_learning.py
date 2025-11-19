@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from src.models.metric_learning_model import create_embedding_model, TripletLoss
 from src.utils.data_loader import FaceClassificationDataset, get_transforms
 from src.utils.triplet_mining import batch_hard_triplet_mining
-from src.utils.evaluation import save_checkpoint, load_checkpoint
+from src.utils.evaluation import save_checkpoint
 
 
 def train_epoch(model, train_loader, criterion, optimizer, device, margin=0.5):
@@ -98,10 +98,10 @@ def validate(model, val_loader, criterion, device, margin=0.5):
 
 def train_metric_learning_model(
     classification_data_dir,
-    num_epochs=20,
-    batch_size=64,
-    learning_rate=1e-4,
-    margin=0.5,
+    num_epochs=30,
+    batch_size=32,
+    learning_rate=1e-5,
+    margin=1.0,
     embedding_dim=512,
     save_dir='models',
     device=None
@@ -111,13 +111,19 @@ def train_metric_learning_model(
     
     Args:
         classification_data_dir: Path to classification_data/ directory
-        num_epochs: Number of training epochs
-        batch_size: Batch size
-        learning_rate: Learning rate
-        margin: Margin for triplet loss
+        num_epochs: Number of training epochs (default: 30, increased from 20)
+        batch_size: Batch size (default: 32, reduced from 64 for better triplet mining)
+        learning_rate: Learning rate (default: 1e-5, reduced from 1e-4 to prevent collapse)
+        margin: Margin for triplet loss (default: 1.0, increased from 0.5 for more separation)
         embedding_dim: Dimension of face embeddings
         save_dir: Directory to save model
         device: 'cuda' or 'cpu' (auto-detected if None)
+    
+    Note: Hyperparameters adjusted to prevent embedding collapse:
+    - Larger margin (1.0) creates more separation between classes
+    - Lower learning rate (1e-5) prevents instability
+    - Smaller batch size (32) improves triplet mining quality
+    - More epochs (30) allows model to converge properly
     """
     # Device selection: CUDA > CPU
     if device is None:
@@ -246,14 +252,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train Metric Learning Model')
     parser.add_argument('--data_dir', type=str, required=True,
                        help='Path to classification_data/ directory')
-    parser.add_argument('--epochs', type=int, default=20,
+    parser.add_argument('--epochs', type=int, default=30,
                        help='Number of training epochs')
-    parser.add_argument('--batch_size', type=int, default=64,
-                       help='Batch size')
-    parser.add_argument('--lr', type=float, default=1e-4,
-                       help='Learning rate')
-    parser.add_argument('--margin', type=float, default=0.5,
-                       help='Margin for triplet loss')
+    parser.add_argument('--batch_size', type=int, default=32,
+                       help='Batch size (smaller for better triplet mining)')
+    parser.add_argument('--lr', type=float, default=1e-5,
+                       help='Learning rate (lower to prevent collapse)')
+    parser.add_argument('--margin', type=float, default=1.0,
+                       help='Margin for triplet loss (larger to create more separation)')
     parser.add_argument('--embedding_dim', type=int, default=512,
                        help='Embedding dimension')
     parser.add_argument('--save_dir', type=str, default='models',
