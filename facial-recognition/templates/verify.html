@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Take Attendance - Attendance System</title>
+    <!-- face-api.js for client-side face positioning and quality assessment -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: #f5f7fa;
+        color: #2c3e50;
+        line-height: 1.6;
+      }
+      .header {
+        background: #ffffff;
+        border-bottom: 1px solid #e1e8ed;
+        padding: 16px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .header h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1a1a1a;
+      }
+      nav {
+        background: #ffffff;
+        border-bottom: 1px solid #e1e8ed;
+        padding: 0;
+      }
+      .nav-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: flex;
+        gap: 0;
+      }
+      nav a {
+        padding: 12px 20px;
+        color: #495057;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+      }
+      nav a:hover {
+        color: #0066cc;
+        background: #f8f9fa;
+      }
+      nav a.active {
+        color: #0066cc;
+        border-bottom-color: #0066cc;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px 24px;
+      }
+      .page-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 4px;
+      }
+      .page-subtitle {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 16px;
+      }
+      .main-layout {
+        display: grid;
+        grid-template-columns: 45% 55%;
+        gap: 20px;
+        align-items: start;
+      }
+      .camera-panel {
+        background: #ffffff;
+        border: 1px solid #e1e8ed;
+        border-radius: 6px;
+        padding: 20px;
+      }
+      .camera-panel h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e1e8ed;
+      }
+      .start-section {
+        background: #ffffff;
+        border: 1px solid #e1e8ed;
+        border-radius: 6px;
+        padding: 40px 30px;
+        text-align: center;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 1;
+      }
+      .start-section button {
+        padding: 12px 32px;
+        background: #28a745;
+        color: #ffffff;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        pointer-events: auto;
+        position: relative;
+        z-index: 10;
+      }
+      .start-section button:hover {
+        background: #218838;
+      }
+      .start-section button:active {
+        transform: scale(0.98);
+      }
+      .camera-section {
+        display: none;
+      }
+      .camera-section.active {
+        display: block;
+      }
+      .camera-container {
+        position: relative;
+        width: 100%;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .video-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 280px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid #28a745;
+        box-shadow: 0 0 12px rgba(40, 167, 69, 0.25);
+        background: #000;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+      .video-wrapper.warning {
+        border-color: #ffc107;
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+      }
+      .video-wrapper.error {
+        border-color: #dc3545;
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+      }
+      #videoElement {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
+        display: none;
+      }
+      .camera-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        font-size: 14px;
+        background: #f8f9fa;
+      }
+      .status-message {
+        text-align: center;
+        margin-top: 12px;
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .status-message.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .status-message.warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+      }
+      .status-message.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .status-message.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      .camera-controls {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 12px;
+      }
+      .camera-controls button {
+        width: auto;
+        padding: 8px 16px;
+        font-size: 13px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .camera-controls button.secondary {
+        background: #6c757d;
+        color: #ffffff;
+      }
+      .camera-controls button.secondary:hover:not(:disabled) {
+        background: #5a6268;
+      }
+      .camera-controls button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .results-panel {
+        background: #ffffff;
+        border: 1px solid #e1e8ed;
+        border-radius: 6px;
+        padding: 20px;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+      }
+      .results-panel h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e1e8ed;
+      }
+      .results {
+        margin-top: 0;
+      }
+      .result-card {
+        background: #f8f9fa;
+        border: 1px solid #e1e8ed;
+        border-radius: 6px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      .result-card h3 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e1e8ed;
+      }
+      .result-card.success {
+        border-left: 4px solid #28a745;
+      }
+      .result-card.error {
+        border-left: 4px solid #dc3545;
+      }
+      .result-card.warning {
+        border-left: 4px solid #ffc107;
+      }
+      .result-card p {
+        font-size: 13px;
+        color: #495057;
+        margin-bottom: 6px;
+      }
+      .result-card .label {
+        font-weight: 600;
+        color: #1a1a1a;
+      }
+      .emotions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .emotion-item {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .emotion-item strong {
+        display: block;
+        font-size: 13px;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+      }
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 6px;
+      }
+      .progress-fill {
+        height: 100%;
+        background: #0066cc;
+        transition: width 0.3s;
+      }
+      .emotion-item small {
+        display: block;
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-content">
+        <h1>Attendance Management System</h1>
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-content">
+        <a href="/verify" class="active">Take Attendance</a>
+        <a href="/realtime">Real-Time Tracking</a>
+        <a href="/register">Employee Registration</a>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="main-layout">
+        <!-- Left: Camera Section -->
+        <div class="camera-panel">
+          <h2>Face Verification</h2>
+
+          <div id="startSection" class="start-section">
+            <button id="takeAttendanceBtn">Take Attendance</button>
+          </div>
+
+          <div id="cameraSection" class="camera-section">
+            <div class="camera-container">
+              <div class="video-wrapper" id="videoWrapper">
+                <video id="videoElement" autoplay playsinline></video>
+                <div class="camera-placeholder" id="cameraPlaceholder">Loading face detection models...</div>
+              </div>
+            </div>
+            <div id="statusMessage" class="status-message info">Position your face in the center</div>
+            <div class="camera-controls">
+              <button type="button" id="cancelBtn" class="secondary">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Results Section -->
+        <div class="results-panel">
+          <h2>Verification Results</h2>
+          <div id="results" class="results">
+            <div style="text-align: center; color: #6c757d; padding: 40px 20px; font-size: 13px">Click "Take Attendance" to begin verification</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const takeAttendanceBtn = document.getElementById("takeAttendanceBtn");
+      const startSection = document.getElementById("startSection");
+      const cameraSection = document.getElementById("cameraSection");
+      const videoElement = document.getElementById("videoElement");
+      const videoWrapper = document.getElementById("videoWrapper");
+      const statusMessage = document.getElementById("statusMessage");
+      const cameraPlaceholder = document.getElementById("cameraPlaceholder");
+      const cancelBtn = document.getElementById("cancelBtn");
+      const resultsDiv = document.getElementById("results");
+
+      let stream = null;
+      let detectionInterval = null;
+      let lastCaptureTime = 0;
+      const CAPTURE_COOLDOWN = 2000; // 2 seconds between captures
+      let modelsLoaded = false;
+
+      // Load face-api.js models
+      async function loadModels() {
+        try {
+          // Try alternative CDN URLs
+          const MODEL_URLS = [
+            "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model",
+            "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights",
+            "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights",
+          ];
+
+          let loaded = false;
+          for (const MODEL_URL of MODEL_URLS) {
+            try {
+              await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL)]);
+              modelsLoaded = true;
+              loaded = true;
+              break;
+            } catch (err) {
+              // Try next URL silently
+            }
+          }
+
+          if (!loaded) {
+            throw new Error("All model URLs failed");
+          }
+        } catch (error) {
+          console.error("Error loading face-api.js models:", error);
+          // Don't block the UI - allow fallback to backend checking
+          modelsLoaded = false;
+        }
+      }
+
+      // Initialize models on page load (non-blocking)
+      loadModels().catch((err) => {
+        console.error("Model loading failed:", err);
+        modelsLoaded = false;
+      });
+
+      // Make sure button is clickable
+      takeAttendanceBtn.style.pointerEvents = "auto";
+      takeAttendanceBtn.style.cursor = "pointer";
+
+      takeAttendanceBtn.addEventListener("click", async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        startSection.style.display = "none";
+        cameraSection.classList.add("active");
+
+        // Update placeholder message
+        if (!modelsLoaded) {
+          cameraPlaceholder.textContent = "Loading face detection... (using backend fallback)";
+        } else {
+          cameraPlaceholder.textContent = "Starting camera...";
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          statusMessage.className = "status-message error";
+          statusMessage.textContent = "Camera access is not available. Please use HTTPS or localhost.";
+          return;
+        }
+
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: "user",
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+            },
+          });
+
+          videoElement.srcObject = stream;
+          videoElement.style.display = "block";
+          cameraPlaceholder.style.display = "none";
+
+          // Wait for video to be ready
+          videoElement.addEventListener(
+            "loadedmetadata",
+            () => {
+              startFaceDetection();
+            },
+            { once: true }
+          );
+        } catch (error) {
+          let errorMessage = "Error accessing camera: ";
+          if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+            errorMessage += "Camera permission denied. Please allow camera access.";
+          } else if (error.name === "NotFoundError") {
+            errorMessage += "No camera found.";
+          } else {
+            errorMessage += error.message;
+          }
+          statusMessage.className = "status-message error";
+          statusMessage.textContent = errorMessage;
+        }
+      });
+
+      function startFaceDetection() {
+        if (detectionInterval) {
+          clearInterval(detectionInterval);
+        }
+
+        detectionInterval = setInterval(async () => {
+          if (!videoElement.videoWidth || !videoElement.videoHeight) return;
+
+          // Try face-api.js if models are loaded, otherwise use backend
+          if (modelsLoaded && typeof faceapi !== "undefined") {
+            try {
+              // Use face-api.js for face detection and quality assessment
+              const detections = await faceapi.detectAllFaces(videoElement, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 })).withFaceLandmarks();
+
+              if (!detections || detections.length === 0) {
+                updateStatus({
+                  hasFace: false,
+                  isCentered: false,
+                  hasGoodLighting: false,
+                  isClear: false,
+                  message: "No face detected. Please position your face in the center.",
+                });
+                return;
+              }
+
+              // Use the first (largest) face
+              const detection = detections[0];
+              const box = detection.detection.box;
+
+              // Calculate face position relative to video center
+              // Note: video is mirrored, but box coordinates are from original video
+              const videoCenterX = videoElement.videoWidth / 2;
+              const videoCenterY = videoElement.videoHeight / 2;
+              const faceCenterX = box.x + box.width / 2;
+              const faceCenterY = box.y + box.height / 2;
+
+              // More lenient centering check (20% offset allowed)
+              const offsetX = Math.abs(faceCenterX - videoCenterX) / videoElement.videoWidth;
+              const offsetY = Math.abs(faceCenterY - videoCenterY) / videoElement.videoHeight;
+              const isCentered = offsetX < 0.2 && offsetY < 0.2;
+
+              // Check face size (more lenient)
+              const faceArea = (box.width * box.height) / (videoElement.videoWidth * videoElement.videoHeight);
+              const hasGoodSize = faceArea > 0.05 && faceArea < 0.6;
+
+              // Check image quality (brightness and clarity)
+              const canvas = document.createElement("canvas");
+              canvas.width = videoElement.videoWidth;
+              canvas.height = videoElement.videoHeight;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(videoElement, 0, 0);
+
+              const faceRegion = ctx.getImageData(
+                Math.max(0, Math.floor(box.x)),
+                Math.max(0, Math.floor(box.y)),
+                Math.min(Math.floor(box.width), videoElement.videoWidth - Math.floor(box.x)),
+                Math.min(Math.floor(box.height), videoElement.videoHeight - Math.floor(box.y))
+              );
+
+              const brightness = calculateBrightness(faceRegion);
+              // More lenient lighting (50-240 range)
+              const hasGoodLighting = brightness > 50 && brightness < 240;
+
+              const clarity = calculateClarity(faceRegion);
+              // Lower clarity threshold (200 instead of 300)
+              const isClear = clarity > 200;
+
+              const allGood = isCentered && hasGoodSize && hasGoodLighting && isClear;
+
+              updateStatus({
+                hasFace: true,
+                isCentered,
+                hasGoodSize,
+                hasGoodLighting,
+                isClear,
+                message: allGood
+                  ? "Perfect! Capturing..."
+                  : !isCentered
+                  ? "Please move your face to the center"
+                  : !hasGoodSize
+                  ? faceArea < 0.05
+                    ? "Please move closer to the camera"
+                    : "Please move farther from the camera"
+                  : !hasGoodLighting
+                  ? brightness < 50
+                    ? "More lighting needed"
+                    : "Too much light, reduce brightness"
+                  : !isClear
+                  ? "Image is blurry, please hold still"
+                  : "Adjusting...",
+              });
+
+              // Auto-capture when all conditions are met
+              if (allGood && Date.now() - lastCaptureTime > CAPTURE_COOLDOWN) {
+                lastCaptureTime = Date.now();
+                captureAndVerify();
+              }
+            } catch (error) {
+              console.error("face-api.js detection error:", error);
+              // Fall back to backend checking
+              modelsLoaded = false;
+              await checkQualityBackend();
+            }
+          } else {
+            // Use backend quality checking as fallback
+            await checkQualityBackend();
+          }
+        }, 300); // Check every 300ms
+      }
+
+      function calculateBrightness(imageData) {
+        let sum = 0;
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          sum += (r + g + b) / 3;
+        }
+        return sum / (data.length / 4);
+      }
+
+      function calculateClarity(imageData) {
+        const data = imageData.data;
+        let sum = 0;
+        let sumSq = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          sum += brightness;
+          sumSq += brightness * brightness;
+        }
+        const mean = sum / (data.length / 4);
+        const variance = sumSq / (data.length / 4) - mean * mean;
+        return Math.sqrt(variance);
+      }
+
+      // Fallback: Use backend for quality checking
+      let lastBackendCheck = 0;
+      const BACKEND_CHECK_INTERVAL = 500; // Check every 500ms to avoid too many requests
+
+      async function checkQualityBackend() {
+        if (!videoElement.videoWidth || !videoElement.videoHeight) return;
+
+        // Throttle backend checks
+        const now = Date.now();
+        if (now - lastBackendCheck < BACKEND_CHECK_INTERVAL) return;
+        lastBackendCheck = now;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext("2d");
+        // Don't mirror for backend processing
+        ctx.drawImage(videoElement, 0, 0);
+
+        canvas.toBlob(
+          async (blob) => {
+            const formData = new FormData();
+            formData.append("image", blob, "check.jpg");
+
+            try {
+              const response = await fetch("/api/verify/check-quality", {
+                method: "POST",
+                body: formData,
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                updateStatus(data);
+
+                // Auto-capture if all conditions met
+                if (data.hasFace && data.isCentered && data.hasGoodLighting && data.isClear) {
+                  if (Date.now() - lastCaptureTime > CAPTURE_COOLDOWN) {
+                    lastCaptureTime = Date.now();
+                    captureAndVerify();
+                  }
+                }
+              } else {
+                // If backend check fails, show generic message
+                updateStatus({
+                  hasFace: true,
+                  isCentered: true,
+                  hasGoodLighting: true,
+                  isClear: true,
+                  message: "Position your face in the center",
+                });
+              }
+            } catch (error) {
+              console.error("Backend quality check error:", error);
+              // Show generic message on error
+              updateStatus({
+                hasFace: true,
+                isCentered: true,
+                hasGoodLighting: true,
+                isClear: true,
+                message: "Position your face in the center",
+              });
+            }
+          },
+          "image/jpeg",
+          0.8
+        );
+      }
+
+      function updateStatus(status) {
+        if (!status.hasFace) {
+          videoWrapper.className = "video-wrapper error";
+          statusMessage.className = "status-message error";
+          statusMessage.textContent = status.message || "No face detected";
+        } else if (!status.isCentered || !status.hasGoodSize || !status.hasGoodLighting || !status.isClear) {
+          videoWrapper.className = "video-wrapper warning";
+          statusMessage.className = "status-message warning";
+          statusMessage.textContent = status.message || "Please adjust your position";
+        } else {
+          videoWrapper.className = "video-wrapper";
+          statusMessage.className = "status-message success";
+          statusMessage.textContent = status.message || "Perfect! Capturing...";
+        }
+      }
+
+      function captureAndVerify() {
+        if (!videoElement.videoWidth || !videoElement.videoHeight) return;
+
+        // Stop detection
+        if (detectionInterval) {
+          clearInterval(detectionInterval);
+          detectionInterval = null;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext("2d");
+
+        // Save full image WITHOUT mirroring for better face detection
+        ctx.drawImage(videoElement, 0, 0);
+
+        canvas.toBlob(
+          async (blob) => {
+            const file = new File([blob], `capture_${Date.now()}.jpg`, { type: "image/jpeg" });
+
+            // Stop camera
+            if (stream) {
+              stream.getTracks().forEach((track) => track.stop());
+              stream = null;
+            }
+            videoElement.srcObject = null;
+            videoElement.style.display = "none";
+            cameraPlaceholder.style.display = "flex";
+            cameraSection.classList.remove("active");
+            startSection.style.display = "block";
+
+            // Verify image using our backend models
+            await verifyImage(file);
+          },
+          "image/jpeg",
+          0.95
+        );
+      }
+
+      cancelBtn.addEventListener("click", function () {
+        if (detectionInterval) {
+          clearInterval(detectionInterval);
+          detectionInterval = null;
+        }
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+        }
+        videoElement.srcObject = null;
+        videoElement.style.display = "none";
+        cameraPlaceholder.style.display = "flex";
+        cameraPlaceholder.textContent = "Click 'Take Attendance' to begin";
+        cameraSection.classList.remove("active");
+        startSection.style.display = "block";
+        resultsDiv.innerHTML = "";
+      });
+
+      async function verifyImage(file) {
+        if (!file) return;
+
+        statusMessage.className = "status-message info";
+        statusMessage.textContent = "Processing...";
+        resultsDiv.innerHTML = '<div class="result-card"><h3>Processing</h3><p>Please wait while we verify your identity...</p></div>';
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+          const response = await fetch("/api/verify", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (data.error) {
+            resultsDiv.innerHTML = `<div class="result-card error"><h3>Error</h3><p>${data.error}</p></div>`;
+          } else {
+            displayResults(data);
+          }
+        } catch (error) {
+          resultsDiv.innerHTML = `<div class="result-card error"><h3>Error</h3><p>${error.message}</p></div>`;
+        }
+      }
+
+      function getVietnamTime() {
+        const now = new Date();
+        // Format in Vietnam timezone (Asia/Ho_Chi_Minh = UTC+7)
+        const options = {
+          timeZone: "Asia/Ho_Chi_Minh",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        };
+
+        const formatter = new Intl.DateTimeFormat("en-GB", options);
+        const parts = formatter.formatToParts(now);
+
+        const day = parts.find((p) => p.type === "day").value;
+        const month = parts.find((p) => p.type === "month").value;
+        const year = parts.find((p) => p.type === "year").value;
+        const hours = parts.find((p) => p.type === "hour").value;
+        const minutes = parts.find((p) => p.type === "minute").value;
+        const seconds = parts.find((p) => p.type === "second").value;
+
+        return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+      }
+
+      function displayResults(data) {
+        let html = "";
+        const timestamp = getVietnamTime();
+
+        // Only show results if face is detected
+        if (!data.face_detected) {
+          html += `<div class="result-card error">
+            <h3>Error</h3>
+            <p>No face detected in image. Please try again.</p>
+          </div>`;
+          resultsDiv.innerHTML = html;
+          return;
+        }
+
+        // 1. Identity Verification
+        html += `<div class="result-card ${data.match_found ? "success" : "warning"}">
+          <h3>Identity Verification</h3>`;
+
+        if (data.match_found) {
+          html += `<p><span class="label">Status:</span> <strong style="color: #28a745;">Verified</strong></p>
+            <p><span class="label">Employee Name:</span> <strong>${data.person_name}</strong></p>
+            <p><span class="label">Match Confidence:</span> ${(data.similarity * 100).toFixed(1)}%</p>`;
+
+          // Add quality info if available
+          if (data.face_quality) {
+            const quality = data.face_quality;
+            html += `<p><span class="label">Image Quality:</span> ${(quality.quality_score * 100).toFixed(1)}%</p>`;
+
+            if (quality.angle_info) {
+              const angle = quality.angle_info;
+              html += `<p><span class="label">Face Angle:</span> Yaw: ${angle.yaw.toFixed(1)}°, Pitch: ${angle.pitch.toFixed(1)}°, Roll: ${angle.roll.toFixed(1)}°</p>`;
+            }
+          }
+
+          // Add timestamp
+          html += `<p><span class="label">Timestamp:</span> ${timestamp} (Vietnam Time)</p>`;
+
+          html += `<p style="margin-top: 12px; padding: 8px; background: #d4edda; border-left: 3px solid #28a745; border-radius: 4px; color: #155724; font-weight: 600;">✓ Attendance recorded successfully</p>`;
+        } else {
+          html += `<p><span class="label">Status:</span> <strong style="color: #dc3545;">Not recognized</strong></p>`;
+          if (data.similarity !== undefined) {
+            html += `<p><span class="label">Best Match Confidence:</span> ${(data.similarity * 100).toFixed(1)}% (below threshold)</p>`;
+          }
+          html += `<p><span class="label">Timestamp:</span> ${timestamp} (Vietnam Time)</p>`;
+          html += `<p style="margin-top: 12px; color: #856404;">This person is not registered in the system. Please contact administrator.</p>`;
+        }
+
+        html += `</div>`;
+
+        // 2. Anti-Spoofing Detection
+        html += `<div class="result-card ${data.is_real ? "success" : "error"}">
+          <h3>Anti-Spoofing Detection</h3>
+          <p>${data.is_real ? "Real face detected" : "Spoofed face detected - access denied"}</p>
+          <p><span class="label">Confidence:</span> ${(data.liveness_confidence * 100).toFixed(1)}%</p>`;
+
+        if (!data.is_real) {
+          html += `<p style="margin-top: 12px; padding: 8px; background: #f8d7da; border-left: 3px solid #dc3545; border-radius: 4px; color: #721c24;">⚠️ Security alert: Potential spoofing attempt detected</p>`;
+        }
+
+        html += `</div>`;
+
+        // 3. Emotion Analysis (detailed with all emotion states)
+        html += `<div class="result-card success">
+          <h3>Emotion Analysis</h3>`;
+
+        if (data.emotion && data.all_emotions) {
+          // Show primary emotion
+          html += `<p><span class="label">Primary Emotion:</span> <strong>${data.emotion.charAt(0).toUpperCase() + data.emotion.slice(1)}</strong> (${(data.emotion_confidence * 100).toFixed(1)}%)</p>`;
+
+          // Show all emotion states with progress bars
+          html += `<div class="emotions-grid" style="margin-top: 16px;">`;
+
+          // Sort emotions by score (descending)
+          const sortedEmotions = Object.entries(data.all_emotions).sort((a, b) => b[1] - a[1]);
+
+          sortedEmotions.forEach(([emotion, score]) => {
+            const percent = (score * 100).toFixed(1);
+            const isPrimary = emotion === data.emotion;
+            html += `<div class="emotion-item" style="${isPrimary ? "background: #d4edda; border: 2px solid #28a745;" : ""}">
+              <strong>${emotion.charAt(0).toUpperCase() + emotion.slice(1)}</strong>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${percent}%; background: ${isPrimary ? "#28a745" : "#0066cc"};"></div>
+              </div>
+              <small>${percent}%</small>
+            </div>`;
+          });
+
+          html += `</div>`;
+        } else {
+          html += `<p>Emotion detection unavailable</p>`;
+        }
+
+        html += `</div>`;
+
+        resultsDiv.innerHTML = html;
+      }
+
+      window.addEventListener("beforeunload", function () {
+        if (detectionInterval) clearInterval(detectionInterval);
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      });
+    </script>
+  </body>
+</html>
