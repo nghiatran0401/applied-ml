@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee Registration - Attendance System</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: #f5f7fa;
+        color: #2c3e50;
+        line-height: 1.5;
+      }
+      .header {
+        background: #ffffff;
+        border-bottom: 1px solid #e1e8ed;
+        padding: 16px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .header h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1a1a1a;
+      }
+      nav {
+        background: #ffffff;
+        border-bottom: 1px solid #e1e8ed;
+        padding: 0;
+      }
+      .nav-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: flex;
+        gap: 0;
+      }
+      nav a {
+        padding: 12px 20px;
+        color: #495057;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+      }
+      nav a:hover {
+        color: #0066cc;
+        background: #f8f9fa;
+      }
+      nav a.active {
+        color: #0066cc;
+        border-bottom-color: #0066cc;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px 24px;
+      }
+      .page-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 4px;
+      }
+      .page-subtitle {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 16px;
+      }
+      .main-layout {
+        display: grid;
+        grid-template-columns: 70% 30%;
+        gap: 20px;
+        align-items: start;
+      }
+      .form-section {
+        background: #ffffff;
+        border: 1px solid #e1e8ed;
+        border-radius: 6px;
+        padding: 20px;
+      }
+      .form-section h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e1e8ed;
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 6px;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+      }
+      input[type="text"]:focus {
+        outline: none;
+        border-color: #0066cc;
+      }
+      .help-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 4px;
+      }
+      .camera-section {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #e1e8ed;
+      }
+      .camera-section h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+      }
+      .camera-container {
+        position: relative;
+        width: 100%;
+        max-width: 280px;
+        margin: 12px auto;
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1;
+      }
+      .video-wrapper {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid #28a745;
+        box-shadow: 0 0 12px rgba(40, 167, 69, 0.25);
+        background: #000;
+      }
+      #videoElement {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+        transform: scaleX(-1);
+      }
+      .camera-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6c757d;
+        font-size: 12px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #f8f9fa;
+        border-radius: 50%;
+        text-align: center;
+        padding: 20px;
+      }
+      .camera-controls {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 12px;
+      }
+      .camera-controls button {
+        width: auto;
+        padding: 8px 16px;
+        font-size: 13px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        font-weight: 500;
+      }
+      .camera-controls button.secondary {
+        background: #6c757d;
+        color: #ffffff;
+      }
+      .camera-controls button.secondary:hover:not(:disabled) {
+        background: #5a6268;
+      }
+      .camera-controls button.capture {
+        background: #28a745;
+        color: #ffffff;
+      }
+      .camera-controls button.capture:hover:not(:disabled) {
+        background: #218838;
+      }
+      .camera-controls button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .captured-photos {
+        margin-top: 12px;
+      }
+      .preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .preview-item {
+        position: relative;
+        border: 1px solid #e1e8ed;
+        border-radius: 4px;
+        overflow: hidden;
+        aspect-ratio: 1;
+      }
+      .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .delete-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 20px;
+        height: 20px;
+        background: #dc3545;
+        color: #ffffff;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        line-height: 1;
+        transition: background-color 0.2s;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+      .delete-btn:hover {
+        background: #c82333;
+      }
+      button.submit {
+        width: 100%;
+        padding: 12px;
+        background: #0066cc;
+        color: #ffffff;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-top: 16px;
+      }
+      button.submit:hover:not(:disabled) {
+        background: #0052a3;
+      }
+      button.submit:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+      }
+      .message {
+        padding: 12px;
+        border-radius: 4px;
+        margin-top: 12px;
+        font-size: 13px;
+      }
+      .message.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .message.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .database-section {
+        background: #ffffff;
+        border: 1px solid #e1e8ed;
+        border-radius: 6px;
+        padding: 20px;
+        max-height: calc(100vh - 200px);
+        display: flex;
+        flex-direction: column;
+      }
+      .database-section h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e1e8ed;
+      }
+      .database-summary {
+        font-size: 13px;
+        color: #495057;
+        margin-bottom: 12px;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border-radius: 4px;
+      }
+      .database-summary strong {
+        color: #1a1a1a;
+        font-weight: 600;
+      }
+      .employee-list {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+      }
+      .employee-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
+        padding: 12px;
+        border-bottom: 1px solid #e1e8ed;
+        align-items: center;
+      }
+      .employee-row:last-child {
+        border-bottom: none;
+      }
+      .employee-row:hover {
+        background: #f8f9fa;
+      }
+      .employee-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #e1e8ed;
+        background: #f8f9fa;
+      }
+      .employee-info h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 4px;
+      }
+      .employee-info p {
+        font-size: 12px;
+        color: #6c757d;
+      }
+      button.delete {
+        padding: 6px 12px;
+        background: #dc3545;
+        color: #ffffff;
+        border: none;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      button.delete:hover {
+        background: #c82333;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+        font-size: 13px;
+      }
+      .empty-state p {
+        margin-bottom: 8px;
+      }
+      @media (max-width: 1024px) {
+        .main-layout {
+          grid-template-columns: 1fr;
+        }
+        .database-section {
+          max-height: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-content">
+        <h1>Attendance Management System</h1>
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-content">
+        <a href="/verify">Take Attendance</a>
+        <a href="/realtime">Real-Time Tracking</a>
+        <a href="/register" class="active">Employee Registration</a>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="main-layout">
+        <!-- Left: Registration Form -->
+        <div class="form-section">
+          <h2>Register New Employee</h2>
+          <form id="registerForm" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="name">Employee Name</label>
+              <input type="text" id="name" name="name" required placeholder="Enter employee full name" />
+            </div>
+
+            <div class="camera-section">
+              <h3>Take Photos with Camera</h3>
+              <div class="help-text" style="text-align: center; margin-bottom: 12px">Take 3-5 photos. Position face within the circular frame.</div>
+              <div class="camera-container">
+                <div class="video-wrapper">
+                  <video id="videoElement" autoplay playsinline></video>
+                  <div class="camera-placeholder" id="cameraPlaceholder">Click "Start Camera" to begin</div>
+                </div>
+              </div>
+              <div class="camera-controls">
+                <button type="button" id="startCameraBtn" class="secondary">Start Camera</button>
+                <button type="button" id="stopCameraBtn" class="secondary" style="display: none">Stop</button>
+                <button type="button" id="captureBtn" class="capture" style="display: none">Capture</button>
+              </div>
+              <div class="captured-photos">
+                <div id="capturedPreview" class="preview"></div>
+              </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="submit">Register Employee</button>
+          </form>
+
+          <div id="message"></div>
+        </div>
+
+        <!-- Right: Employee Database -->
+        <div class="database-section">
+          <h2>Employee Database</h2>
+          <div id="dbMessage"></div>
+
+          {% if people %}
+          <div class="database-summary"><strong>Total Employees:</strong> {{ people|length }}</div>
+
+          <div class="employee-list">
+            {% for person in people %}
+            <div class="employee-row" id="person-{{ person.id }}">
+              {% if person.avatar_url %}
+              <img src="{{ person.avatar_url }}" alt="{{ person.name }}" class="employee-avatar" />
+              {% else %}
+              <div class="employee-avatar" style="display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 20px">👤</div>
+              {% endif %}
+              <div class="employee-info">
+                <h3>{{ person.name }}</h3>
+                <p>ID: {{ person.id }} | Templates: {{ person.embedding_count }}</p>
+              </div>
+              <button class="delete" onclick="deletePerson({{ person.id }}, '{{ person.name }}')">Remove</button>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty-state">
+            <p>No employees registered yet.</p>
+            <p>Register the first employee on the left.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById("registerForm");
+      const messageDiv = document.getElementById("message");
+      const videoElement = document.getElementById("videoElement");
+      const cameraPlaceholder = document.getElementById("cameraPlaceholder");
+      const startCameraBtn = document.getElementById("startCameraBtn");
+      const stopCameraBtn = document.getElementById("stopCameraBtn");
+      const captureBtn = document.getElementById("captureBtn");
+      const capturedPreview = document.getElementById("capturedPreview");
+
+      let stream = null;
+      let capturedPhotos = [];
+
+      startCameraBtn.addEventListener("click", async function () {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          alert("Camera access is not available. Please use HTTPS or localhost.");
+          return;
+        }
+
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: "user",
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+            },
+          });
+          videoElement.srcObject = stream;
+          videoElement.style.display = "block";
+          cameraPlaceholder.style.display = "none";
+          startCameraBtn.style.display = "none";
+          stopCameraBtn.style.display = "inline-block";
+          captureBtn.style.display = "inline-block";
+        } catch (error) {
+          let errorMessage = "Error accessing camera: ";
+          if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+            errorMessage += "Camera permission denied. Please allow camera access.";
+          } else if (error.name === "NotFoundError") {
+            errorMessage += "No camera found.";
+          } else {
+            errorMessage += error.message;
+          }
+          alert(errorMessage);
+        }
+      });
+
+      stopCameraBtn.addEventListener("click", function () {
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+        }
+        videoElement.srcObject = null;
+        videoElement.style.display = "none";
+        cameraPlaceholder.style.display = "flex";
+        startCameraBtn.style.display = "inline-block";
+        stopCameraBtn.style.display = "none";
+        captureBtn.style.display = "none";
+      });
+
+      captureBtn.addEventListener("click", function () {
+        if (!videoElement.srcObject) return;
+
+        const fullCanvas = document.createElement("canvas");
+        fullCanvas.width = videoElement.videoWidth;
+        fullCanvas.height = videoElement.videoHeight;
+        const fullCtx = fullCanvas.getContext("2d");
+        fullCtx.drawImage(videoElement, 0, 0, fullCanvas.width, fullCanvas.height);
+
+        const previewCanvas = document.createElement("canvas");
+        const size = Math.min(videoElement.videoWidth, videoElement.videoHeight);
+        previewCanvas.width = size;
+        previewCanvas.height = size;
+        const previewCtx = previewCanvas.getContext("2d");
+
+        const centerX = videoElement.videoWidth / 2;
+        const centerY = videoElement.videoHeight / 2;
+        const radius = size / 2;
+
+        previewCtx.beginPath();
+        previewCtx.arc(radius, radius, radius, 0, 2 * Math.PI);
+        previewCtx.clip();
+
+        const sourceX = centerX - radius;
+        const sourceY = centerY - radius;
+        previewCtx.save();
+        previewCtx.scale(-1, 1);
+        previewCtx.drawImage(videoElement, sourceX, sourceY, size, size, -size, 0, size, size);
+        previewCtx.restore();
+
+        fullCanvas.toBlob(
+          function (blob) {
+            const file = new File([blob], `capture_${Date.now()}.jpg`, { type: "image/jpeg" });
+            capturedPhotos.push(file);
+
+            previewCanvas.toBlob(
+              function (previewBlob) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                  const photoIndex = capturedPhotos.length - 1;
+                  const div = document.createElement("div");
+                  div.className = "preview-item";
+                  div.setAttribute("data-photo-index", photoIndex);
+                  div.innerHTML = `
+                    <img src="${e.target.result}" alt="Captured ${capturedPhotos.length}">
+                    <button type="button" class="delete-btn" onclick="deletePhoto(${photoIndex})" title="Delete photo">×</button>
+                  `;
+                  capturedPreview.appendChild(div);
+                };
+                reader.readAsDataURL(previewBlob);
+              },
+              "image/jpeg",
+              0.95
+            );
+          },
+          "image/jpeg",
+          0.95
+        );
+      });
+
+      window.deletePhoto = function (index) {
+        capturedPhotos.splice(index, 1);
+
+        const previewItems = capturedPreview.querySelectorAll(".preview-item");
+        previewItems.forEach((item) => {
+          if (parseInt(item.getAttribute("data-photo-index")) === index) {
+            item.remove();
+          }
+        });
+
+        const remainingItems = capturedPreview.querySelectorAll(".preview-item");
+        remainingItems.forEach((item, newIndex) => {
+          const oldIndex = parseInt(item.getAttribute("data-photo-index"));
+          if (oldIndex > index) {
+            item.setAttribute("data-photo-index", oldIndex - 1);
+            const deleteBtn = item.querySelector(".delete-btn");
+            if (deleteBtn) {
+              deleteBtn.setAttribute("onclick", `deletePhoto(${oldIndex - 1})`);
+            }
+          }
+        });
+      };
+
+      window.addEventListener("beforeunload", function () {
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      });
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const submitBtn = document.getElementById("submitBtn");
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Processing...";
+        messageDiv.innerHTML = "";
+
+        const formData = new FormData();
+        formData.append("name", document.getElementById("name").value);
+
+        if (capturedPhotos.length === 0) {
+          messageDiv.innerHTML = `<div class="message error">Please capture at least one photo using the camera</div>`;
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Register Employee";
+          return;
+        }
+
+        for (let i = 0; i < capturedPhotos.length; i++) {
+          formData.append("images", capturedPhotos[i]);
+        }
+
+        try {
+          const response = await fetch("/api/register", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            messageDiv.innerHTML = `<div class="message success">${data.message}</div>`;
+            form.reset();
+            capturedPreview.innerHTML = "";
+            capturedPhotos = [];
+            if (stream) {
+              stream.getTracks().forEach((track) => track.stop());
+              stream = null;
+              videoElement.srcObject = null;
+              videoElement.style.display = "none";
+              cameraPlaceholder.style.display = "flex";
+              startCameraBtn.style.display = "inline-block";
+              stopCameraBtn.style.display = "none";
+              captureBtn.style.display = "none";
+            }
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          } else {
+            messageDiv.innerHTML = `<div class="message error">Error: ${data.error || "Registration failed"}</div>`;
+          }
+        } catch (error) {
+          messageDiv.innerHTML = `<div class="message error">Error: ${error.message}</div>`;
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Register Employee";
+        }
+      });
+
+      async function deletePerson(personId, personName) {
+        if (!confirm(`Are you sure you want to remove ${personName} from the system?`)) {
+          return;
+        }
+
+        const dbMessageDiv = document.getElementById("dbMessage");
+        try {
+          const response = await fetch(`/api/database/${personId}`, {
+            method: "DELETE",
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            dbMessageDiv.innerHTML = `<div class="message success">${data.message}</div>`;
+            const personCard = document.getElementById(`person-${personId}`);
+            if (personCard) {
+              personCard.remove();
+            }
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          } else {
+            dbMessageDiv.innerHTML = `<div class="message error">Error removing employee</div>`;
+          }
+        } catch (error) {
+          dbMessageDiv.innerHTML = `<div class="message error">Error: ${error.message}</div>`;
+        }
+      }
+    </script>
+  </body>
+</html>
