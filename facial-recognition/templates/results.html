@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Model Results & Metrics - Attendance System</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: #f5f7fa;
+        color: #2c3e50;
+        line-height: 1.6;
+      }
+      .header {
+        background: #ffffff;
+        border-bottom: 1px solid #e1e8ed;
+        padding: 16px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .header h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1a1a1a;
+      }
+      nav {
+        background: #ffffff;
+        border-bottom: 1px solid #e1e8ed;
+        padding: 0;
+      }
+      .nav-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: flex;
+        gap: 0;
+      }
+      nav a {
+        padding: 12px 20px;
+        color: #495057;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+      }
+      nav a:hover {
+        color: #0066cc;
+        background: #f8f9fa;
+      }
+      nav a.active {
+        color: #0066cc;
+        border-bottom-color: #0066cc;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px 24px;
+      }
+      .page-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+      }
+      .page-subtitle {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 24px;
+      }
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 16px;
+        border-radius: 6px;
+        border: 1px solid #f5c6cb;
+        margin-bottom: 20px;
+      }
+      .section {
+        background: #ffffff;
+        border: 1px solid #e1e8ed;
+        border-radius: 6px;
+        padding: 24px;
+        margin-bottom: 24px;
+      }
+      .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #e1e8ed;
+      }
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .metric-card {
+        background: #f8f9fa;
+        border: 1px solid #e1e8ed;
+        border-radius: 6px;
+        padding: 16px;
+        border-left: 4px solid #0066cc;
+      }
+      .metric-card.excellent {
+        border-left-color: #28a745;
+      }
+      .metric-card.good {
+        border-left-color: #17a2b8;
+      }
+      .metric-card.warning {
+        border-left-color: #ffc107;
+      }
+      .metric-label {
+        font-size: 13px;
+        color: #6c757d;
+        margin-bottom: 8px;
+        font-weight: 500;
+      }
+      .metric-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 4px;
+      }
+      .metric-description {
+        font-size: 12px;
+        color: #6c757d;
+      }
+      .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+      .chart-container {
+        background: #ffffff;
+        border: 1px solid #e1e8ed;
+        border-radius: 6px;
+        padding: 16px;
+      }
+      .chart-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 12px;
+        text-align: center;
+      }
+      .chart-image {
+        width: 100%;
+        height: auto;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+      }
+      .comparison-table th,
+      .comparison-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e1e8ed;
+      }
+      .comparison-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #1a1a1a;
+        font-size: 14px;
+      }
+      .comparison-table td {
+        font-size: 13px;
+        color: #495057;
+      }
+      .comparison-table tr:hover {
+        background: #f8f9fa;
+      }
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .badge.excellent {
+        background: #d4edda;
+        color: #155724;
+      }
+      .badge.good {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+      .badge.warning {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .info-box {
+        background: #e7f3ff;
+        border-left: 4px solid #0066cc;
+        padding: 16px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+      }
+      .info-box p {
+        margin: 0;
+        font-size: 13px;
+        color: #0c5460;
+      }
+      .info-box strong {
+        color: #0066cc;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-content">
+        <h1>Attendance Management System</h1>
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-content">
+        <a href="/verify">Take Attendance</a>
+        <a href="/realtime">Real-Time Tracking</a>
+        <a href="/register">Employee Registration</a>
+        <a href="/results" class="active">Model Results</a>
+      </div>
+    </nav>
+
+    <div class="container">
+      <h1 class="page-title">Model Results & Evaluation Metrics</h1>
+      <p class="page-subtitle">Performance metrics, evaluation results, and training history for all trained models</p>
+
+      <div id="loading" class="loading">Loading model results...</div>
+      <div id="error" class="error" style="display: none"></div>
+      <div id="content" style="display: none">
+        <!-- Classification Model Results -->
+        <div class="section">
+          <h2 class="section-title">Classification Model Results</h2>
+          <div id="classificationTrainingInfo" class="metrics-grid" style="margin-bottom: 24px"></div>
+          <div id="classificationMetrics" class="metrics-grid"></div>
+          <div id="classificationCharts" class="charts-grid"></div>
+        </div>
+
+        <!-- Metric Learning Model Results -->
+        <div class="section">
+          <h2 class="section-title">Metric Learning Model Results</h2>
+          <div id="metricLearningTrainingInfo" class="metrics-grid" style="margin-bottom: 24px"></div>
+          <div id="metricLearningMetrics" class="metrics-grid"></div>
+          <div id="metricLearningCharts" class="charts-grid"></div>
+        </div>
+
+        <!-- Model Comparison -->
+        <div class="section">
+          <h2 class="section-title">Model Comparison</h2>
+          <div id="comparisonTable"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      async function loadResults() {
+        try {
+          const response = await fetch("/api/results");
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          const data = await response.json();
+
+          // Hide loading, show content
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("content").style.display = "block";
+
+          // Display classification results
+          if (data.classification) {
+            displayClassificationResults(data.classification);
+          }
+
+          // Display metric learning results
+          if (data.metric_learning) {
+            displayMetricLearningResults(data.metric_learning);
+          }
+
+          // Display comparison
+          if (data.classification && data.metric_learning) {
+            displayComparison(data.classification, data.metric_learning);
+          }
+        } catch (error) {
+          document.getElementById("loading").style.display = "none";
+          const errorDiv = document.getElementById("error");
+          errorDiv.style.display = "block";
+          errorDiv.textContent = `Error loading results: ${error.message}`;
+        }
+      }
+
+      function getAUCBadge(auc) {
+        if (auc >= 0.9) return '<span class="badge excellent">Excellent</span>';
+        if (auc >= 0.8) return '<span class="badge good">Good</span>';
+        return '<span class="badge warning">Needs Improvement</span>';
+      }
+
+      function formatPercent(value) {
+        return (value * 100).toFixed(2) + "%";
+      }
+
+      function formatNumber(value, decimals = 4) {
+        return parseFloat(value).toFixed(decimals);
+      }
+
+      function displayClassificationResults(results) {
+        const trainingInfoDiv = document.getElementById("classificationTrainingInfo");
+        const metricsDiv = document.getElementById("classificationMetrics");
+        const chartsDiv = document.getElementById("classificationCharts");
+
+        // Display training information
+        if (results.training_info) {
+          const info = results.training_info;
+          let trainingHTML = "";
+
+          if (info.training_samples) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Training Samples</div>
+                <div class="metric-value">${info.training_samples.toLocaleString()}</div>
+                <div class="metric-description">Total images used for training</div>
+              </div>
+            `;
+          }
+
+          if (info.validation_samples) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Validation Samples</div>
+                <div class="metric-value">${info.validation_samples.toLocaleString()}</div>
+                <div class="metric-description">Total images used for validation</div>
+              </div>
+            `;
+          }
+
+          if (info.num_classes) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Number of Classes</div>
+                <div class="metric-value">${info.num_classes.toLocaleString()}</div>
+                <div class="metric-description">Unique identities in dataset</div>
+              </div>
+            `;
+          }
+
+          if (info.num_epochs) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Training Epochs</div>
+                <div class="metric-value">${info.num_epochs}</div>
+                <div class="metric-description">Total epochs trained</div>
+              </div>
+            `;
+          }
+
+          if (info.best_val_loss !== undefined) {
+            trainingHTML += `
+              <div class="metric-card excellent">
+                <div class="metric-label">Best Validation Loss</div>
+                <div class="metric-value">${formatNumber(info.best_val_loss, 6)}</div>
+                <div class="metric-description">Lowest validation loss achieved</div>
+              </div>
+            `;
+          }
+
+          if (info.final_train_loss !== undefined) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Final Train Loss</div>
+                <div class="metric-value">${formatNumber(info.final_train_loss, 4)}</div>
+                <div class="metric-description">Training loss at final epoch</div>
+              </div>
+            `;
+          }
+
+          if (info.final_val_loss !== undefined) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Final Validation Loss</div>
+                <div class="metric-value">${formatNumber(info.final_val_loss, 6)}</div>
+                <div class="metric-description">Validation loss at final epoch</div>
+              </div>
+            `;
+          }
+
+          if (info.device) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Training Device</div>
+                <div class="metric-value">${info.device.toUpperCase()}</div>
+                <div class="metric-description">Hardware used for training</div>
+              </div>
+            `;
+          }
+
+          trainingInfoDiv.innerHTML = trainingHTML;
+        }
+
+        // Metrics
+        let metricsHTML = "";
+
+        if (results.cosine_similarity) {
+          const cos = results.cosine_similarity;
+          metricsHTML += `
+            <div class="metric-card ${cos.auc >= 0.9 ? "excellent" : cos.auc >= 0.8 ? "good" : "warning"}">
+              <div class="metric-label">Cosine Similarity - AUC</div>
+              <div class="metric-value">${formatNumber(cos.auc, 4)}</div>
+              <div class="metric-description">${getAUCBadge(cos.auc).replace(/<[^>]*>/g, "")}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Mean Similarity (Same Person)</div>
+              <div class="metric-value">${formatNumber(cos.mean_similarity_same, 4)}</div>
+              <div class="metric-description">Average cosine similarity for matching pairs</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Mean Similarity (Different Person)</div>
+              <div class="metric-value">${formatNumber(cos.mean_similarity_different, 4)}</div>
+              <div class="metric-description">Average cosine similarity for non-matching pairs</div>
+            </div>
+          `;
+        }
+
+        if (results.euclidean_distance) {
+          const euc = results.euclidean_distance;
+          metricsHTML += `
+            <div class="metric-card ${euc.auc >= 0.9 ? "excellent" : euc.auc >= 0.8 ? "good" : "warning"}">
+              <div class="metric-label">Euclidean Distance - AUC</div>
+              <div class="metric-value">${formatNumber(euc.auc, 4)}</div>
+              <div class="metric-description">${getAUCBadge(euc.auc).replace(/<[^>]*>/g, "")}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Mean Distance (Same Person)</div>
+              <div class="metric-value">${formatNumber(euc.mean_similarity_same, 4)}</div>
+              <div class="metric-description">Average Euclidean distance for matching pairs</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Mean Distance (Different Person)</div>
+              <div class="metric-value">${formatNumber(euc.mean_similarity_different, 4)}</div>
+              <div class="metric-description">Average Euclidean distance for non-matching pairs</div>
+            </div>
+          `;
+        }
+
+        metricsDiv.innerHTML = metricsHTML;
+
+        // Charts
+        let chartsHTML = "";
+        if (results.roc_cosine_image) {
+          chartsHTML += `
+            <div class="chart-container">
+              <div class="chart-title">ROC Curve - Cosine Similarity</div>
+              <img src="${results.roc_cosine_image}" alt="ROC Curve Cosine" class="chart-image" />
+            </div>
+          `;
+        }
+        if (results.roc_euclidean_image) {
+          chartsHTML += `
+            <div class="chart-container">
+              <div class="chart-title">ROC Curve - Euclidean Distance</div>
+              <img src="${results.roc_euclidean_image}" alt="ROC Curve Euclidean" class="chart-image" />
+            </div>
+          `;
+        }
+        if (results.training_history_image) {
+          chartsHTML += `
+            <div class="chart-container">
+              <div class="chart-title">Training History</div>
+              <img src="${results.training_history_image}" alt="Training History" class="chart-image" />
+            </div>
+          `;
+        }
+        chartsDiv.innerHTML = chartsHTML;
+      }
+
+      function displayMetricLearningResults(results) {
+        const trainingInfoDiv = document.getElementById("metricLearningTrainingInfo");
+        const metricsDiv = document.getElementById("metricLearningMetrics");
+        const chartsDiv = document.getElementById("metricLearningCharts");
+
+        // Display training information
+        if (results.training_info) {
+          const info = results.training_info;
+          let trainingHTML = "";
+
+          if (info.training_samples) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Training Samples</div>
+                <div class="metric-value">${info.training_samples.toLocaleString()}</div>
+                <div class="metric-description">Total images used for training</div>
+              </div>
+            `;
+          }
+
+          if (info.validation_samples) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Validation Samples</div>
+                <div class="metric-value">${info.validation_samples.toLocaleString()}</div>
+                <div class="metric-description">Total images used for validation</div>
+              </div>
+            `;
+          }
+
+          if (info.num_classes) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Number of Classes</div>
+                <div class="metric-value">${info.num_classes.toLocaleString()}</div>
+                <div class="metric-description">Unique identities in dataset</div>
+              </div>
+            `;
+          }
+
+          if (info.num_epochs) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Training Epochs</div>
+                <div class="metric-value">${info.num_epochs}</div>
+                <div class="metric-description">Total epochs trained</div>
+              </div>
+            `;
+          }
+
+          if (info.best_val_loss !== undefined) {
+            trainingHTML += `
+              <div class="metric-card excellent">
+                <div class="metric-label">Best Validation Loss</div>
+                <div class="metric-value">${formatNumber(info.best_val_loss, 6)}</div>
+                <div class="metric-description">Lowest validation loss achieved</div>
+              </div>
+            `;
+          }
+
+          if (info.final_train_loss !== undefined) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Final Train Loss</div>
+                <div class="metric-value">${formatNumber(info.final_train_loss, 4)}</div>
+                <div class="metric-description">Training loss at final epoch</div>
+              </div>
+            `;
+          }
+
+          if (info.final_val_loss !== undefined) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Final Validation Loss</div>
+                <div class="metric-value">${formatNumber(info.final_val_loss, 6)}</div>
+                <div class="metric-description">Validation loss at final epoch</div>
+              </div>
+            `;
+          }
+
+          if (info.device) {
+            trainingHTML += `
+              <div class="metric-card">
+                <div class="metric-label">Training Device</div>
+                <div class="metric-value">${info.device.toUpperCase()}</div>
+                <div class="metric-description">Hardware used for training</div>
+              </div>
+            `;
+          }
+
+          trainingInfoDiv.innerHTML = trainingHTML;
+        }
+
+        // Metrics
+        let metricsHTML = "";
+
+        if (results.cosine_similarity) {
+          const cos = results.cosine_similarity;
+          metricsHTML += `
+            <div class="metric-card ${cos.auc >= 0.9 ? "excellent" : cos.auc >= 0.8 ? "good" : "warning"}">
+              <div class="metric-label">Cosine Similarity - AUC</div>
+              <div class="metric-value">${formatNumber(cos.auc, 4)}</div>
+              <div class="metric-description">${getAUCBadge(cos.auc).replace(/<[^>]*>/g, "")}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Best Threshold (Cosine)</div>
+              <div class="metric-value">${formatNumber(cos.best_threshold, 4)}</div>
+              <div class="metric-description">Optimal threshold for verification</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Accuracy (Cosine)</div>
+              <div class="metric-value">${formatPercent(cos.accuracy)}</div>
+              <div class="metric-description">Classification accuracy at best threshold</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Mean Similarity (Same Person)</div>
+              <div class="metric-value">${formatNumber(cos.mean_similarity_same, 4)}</div>
+              <div class="metric-description">Average cosine similarity for matching pairs</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Mean Similarity (Different Person)</div>
+              <div class="metric-value">${formatNumber(cos.mean_similarity_different, 4)}</div>
+              <div class="metric-description">Average cosine similarity for non-matching pairs</div>
+            </div>
+          `;
+        }
+
+        if (results.euclidean_distance) {
+          const euc = results.euclidean_distance;
+          metricsHTML += `
+            <div class="metric-card ${euc.auc >= 0.9 ? "excellent" : euc.auc >= 0.8 ? "good" : "warning"}">
+              <div class="metric-label">Euclidean Distance - AUC</div>
+              <div class="metric-value">${formatNumber(euc.auc, 4)}</div>
+              <div class="metric-description">${getAUCBadge(euc.auc).replace(/<[^>]*>/g, "")}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Best Threshold (Euclidean)</div>
+              <div class="metric-value">${formatNumber(euc.best_threshold, 4)}</div>
+              <div class="metric-description">Optimal threshold for verification</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Accuracy (Euclidean)</div>
+              <div class="metric-value">${formatPercent(euc.accuracy)}</div>
+              <div class="metric-description">Classification accuracy at best threshold</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Mean Distance (Same Person)</div>
+              <div class="metric-value">${formatNumber(euc.mean_similarity_same, 4)}</div>
+              <div class="metric-description">Average Euclidean distance for matching pairs</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Mean Distance (Different Person)</div>
+              <div class="metric-value">${formatNumber(euc.mean_similarity_different, 4)}</div>
+              <div class="metric-description">Average Euclidean distance for non-matching pairs</div>
+            </div>
+          `;
+        }
+
+        metricsDiv.innerHTML = metricsHTML;
+
+        // Charts
+        let chartsHTML = "";
+        if (results.roc_cosine_image) {
+          chartsHTML += `
+            <div class="chart-container">
+              <div class="chart-title">ROC Curve - Cosine Similarity</div>
+              <img src="${results.roc_cosine_image}" alt="ROC Curve Cosine" class="chart-image" />
+            </div>
+          `;
+        }
+        if (results.roc_euclidean_image) {
+          chartsHTML += `
+            <div class="chart-container">
+              <div class="chart-title">ROC Curve - Euclidean Distance</div>
+              <img src="${results.roc_euclidean_image}" alt="ROC Curve Euclidean" class="chart-image" />
+            </div>
+          `;
+        }
+        if (results.training_history_image) {
+          chartsHTML += `
+            <div class="chart-container">
+              <div class="chart-title">Training History</div>
+              <img src="${results.training_history_image}" alt="Training History" class="chart-image" />
+            </div>
+          `;
+        }
+        chartsDiv.innerHTML = chartsHTML;
+      }
+
+      function displayComparison(classification, metricLearning) {
+        const comparisonDiv = document.getElementById("comparisonTable");
+
+        let tableHTML = `
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Classification Model</th>
+                <th>Metric Learning Model</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        // Cosine Similarity AUC
+        const classCosAUC = classification.cosine_similarity?.auc || 0;
+        const metricCosAUC = metricLearning.cosine_similarity?.auc || 0;
+        tableHTML += `
+          <tr>
+            <td><strong>Cosine Similarity AUC</strong></td>
+            <td>${formatNumber(classCosAUC, 4)} ${getAUCBadge(classCosAUC)}</td>
+            <td>${formatNumber(metricCosAUC, 4)} ${getAUCBadge(metricCosAUC)}</td>
+          </tr>
+        `;
+
+        // Euclidean Distance AUC
+        const classEucAUC = classification.euclidean_distance?.auc || 0;
+        const metricEucAUC = metricLearning.euclidean_distance?.auc || 0;
+        tableHTML += `
+          <tr>
+            <td><strong>Euclidean Distance AUC</strong></td>
+            <td>${formatNumber(classEucAUC, 4)} ${getAUCBadge(classEucAUC)}</td>
+            <td>${formatNumber(metricEucAUC, 4)} ${getAUCBadge(metricEucAUC)}</td>
+          </tr>
+        `;
+
+        // Mean Similarity Same (Cosine)
+        const classCosSame = classification.cosine_similarity?.mean_similarity_same || 0;
+        const metricCosSame = metricLearning.cosine_similarity?.mean_similarity_same || 0;
+        tableHTML += `
+          <tr>
+            <td><strong>Mean Cosine Similarity (Same Person)</strong></td>
+            <td>${formatNumber(classCosSame, 4)}</td>
+            <td>${formatNumber(metricCosSame, 4)}</td>
+          </tr>
+        `;
+
+        // Mean Similarity Different (Cosine)
+        const classCosDiff = classification.cosine_similarity?.mean_similarity_different || 0;
+        const metricCosDiff = metricLearning.cosine_similarity?.mean_similarity_different || 0;
+        tableHTML += `
+          <tr>
+            <td><strong>Mean Cosine Similarity (Different Person)</strong></td>
+            <td>${formatNumber(classCosDiff, 4)}</td>
+            <td>${formatNumber(metricCosDiff, 4)}</td>
+          </tr>
+        `;
+
+        tableHTML += `
+            </tbody>
+          </table>
+        `;
+
+        comparisonDiv.innerHTML = tableHTML;
+      }
+
+      // Load results on page load
+      loadResults();
+    </script>
+  </body>
+</html>

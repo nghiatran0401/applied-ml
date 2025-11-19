@@ -14,6 +14,7 @@ import logging
 
 from src.models.classification_model import create_model
 from src.utils.face_detector import FaceDetector
+from src.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -140,18 +141,24 @@ class FaceDatabase:
                 if image_paths:
                     self.register_person(person_id, person_name, image_paths)
     
-    def find_match(self, embedding, threshold=0.6, metric='cosine'):
+    def find_match(self, embedding, threshold=None, metric=None):
         """
         Find best matching person for given embedding
         
         Args:
             embedding: Face embedding to match
-            threshold: Similarity threshold (higher = stricter)
-            metric: 'cosine' or 'euclidean'
+            threshold: Similarity threshold (higher = stricter). If None, uses config default.
+            metric: 'cosine' or 'euclidean'. If None, uses config default.
             
         Returns:
             (person_id, person_name, similarity_score) or (None, None, 0)
         """
+        config = get_config()
+        if threshold is None:
+            threshold = config.face_recognition.similarity_threshold_verify
+        if metric is None:
+            metric = config.face_recognition.metric
+        
         if len(self.database) == 0:
             return None, None, 0.0
         

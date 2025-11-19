@@ -9,6 +9,7 @@ from PIL import Image
 import cv2
 from pathlib import Path
 import logging
+from src.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -40,20 +41,21 @@ class AntiSpoofingDetector:
     Anti-spoofing detector for liveness detection
     Uses pre-trained models or heuristic methods
     """
-    def __init__(self, method='deepface', device='cpu'):
+    def __init__(self, method=None, device='cpu'):
         """
         Args:
-            method: 'deepface' (pre-trained) or 'heuristic' (simple)
+            method: 'deepface' (pre-trained) or 'heuristic' (simple). If None, uses config.
             device: 'cuda' or 'cpu'
         """
-        self.method = method
+        config = get_config()
+        self.method = method if method is not None else config.anti_spoofing.method
         self.device = device
         
-        if method == 'deepface' and not _check_deepface_available():
+        if self.method == 'deepface' and not _check_deepface_available():
             logger.warning("deepface not available. Falling back to heuristic method.")
             self.method = 'heuristic'
         
-        if method == 'deepface':
+        if self.method == 'deepface':
             logger.info("Using DeepFace for anti-spoofing detection")
         else:
             logger.info("Using heuristic-based anti-spoofing detection")
@@ -105,18 +107,20 @@ class AntiSpoofingDetector:
             confidence = 0.7  # Default confidence
             
             # Check image quality (real faces usually have better quality)
+            config = get_config()
+            anti_spoof_cfg = config.anti_spoofing
             gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY) if len(img_array.shape) == 3 else img_array
             laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
             
             # Higher variance = sharper image = more likely real
-            if laplacian_var > 100:
-                confidence = 0.9
-            elif laplacian_var > 50:
-                confidence = 0.7
+            if laplacian_var > anti_spoof_cfg.sharpness_threshold_high:
+                confidence = anti_spoof_cfg.confidence_high
+            elif laplacian_var > anti_spoof_cfg.sharpness_threshold_medium:
+                confidence = anti_spoof_cfg.confidence_medium
             else:
-                confidence = 0.5
+                confidence = anti_spoof_cfg.confidence_low
             
-            is_real = confidence > 0.6
+            is_real = confidence > anti_spoof_cfg.confidence_threshold
             
             return is_real, confidence
             
@@ -156,15 +160,20 @@ class AntiSpoofingDetector:
         else:
             color_score = 0.5
         
+        config = get_config()
+        anti_spoof_cfg = config.anti_spoofing
+        
         # Combine heuristics
-        sharpness_score = min(laplacian_var / 200.0, 1.0)  # Normalize to 0-1
+        sharpness_score = min(laplacian_var / anti_spoof_cfg.sharpness_threshold_high, 1.0)  # Normalize to 0-1
         texture_score_norm = min(texture_score / 50.0, 1.0)  # Normalize to 0-1
         
-        # Weighted combination
-        confidence = 0.4 * sharpness_score + 0.4 * texture_score_norm + 0.2 * color_score
+        # Weighted combination using config values
+        confidence = (anti_spoof_cfg.sharpness_weight * sharpness_score + 
+                     anti_spoof_cfg.texture_weight * texture_score_norm + 
+                     anti_spoof_cfg.color_weight * color_score)
         
         # Threshold
-        is_real = confidence > 0.5
+        is_real = confidence > anti_spoof_cfg.confidence_threshold
         
         return is_real, float(confidence)
     
@@ -211,12 +220,12 @@ class AntiSpoofingDetector:
         return results
 
 
-def create_anti_spoofing_detector(method='heuristic', device='cpu'):
+def create_anti_spoofing_detector(method=None, device='cpu'):
     """
     Create anti-spoofing detector
     
     Args:
-        method: 'deepface' or 'heuristic'
+        method: 'deepface' or 'heuristic'. If None, uses config.
         device: 'cuda', 'mps', or 'cpu'
         
     Returns:

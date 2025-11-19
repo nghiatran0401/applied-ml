@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image
 import cv2
 import logging
+from src.utils.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -38,16 +39,17 @@ class EmotionDetector:
     Emotion detection using pre-trained models
     Detects: happy, sad, angry, surprise, fear, disgust, neutral
     """
-    def __init__(self, method='fer', device='cpu'):
+    def __init__(self, method=None, device='cpu'):
         """
         Args:
-            method: 'fer' (FER library) or 'simple' (heuristic)
+            method: 'fer' (FER library) or 'simple' (heuristic). If None, uses config.
             device: 'cuda' or 'cpu'
         """
-        self.method = method
+        config = get_config()
+        self.method = method if method is not None else config.emotion_detection.method
         self.device = device
         
-        if method == 'fer' and not _check_fer_available():
+        if self.method == 'fer' and not _check_fer_available():
             logger.warning("fer library not available. Falling back to simple method.")
             self.method = 'simple'
         
@@ -103,9 +105,12 @@ class EmotionDetector:
             # Detect emotions
             emotions = self.detector.detect_emotions(img_bgr)
             
+            config = get_config()
+            emotion_cfg = config.emotion_detection
+            
             if len(emotions) == 0:
                 # No face detected
-                return 'neutral', 0.5, {'neutral': 1.0}
+                return emotion_cfg.default_emotion, emotion_cfg.default_confidence, {emotion_cfg.default_emotion: 1.0}
             
             # Get top emotion
             top_emotion = emotions[0]
@@ -209,12 +214,12 @@ class EmotionDetector:
         return emotion_icons.get(emotion.lower(), '😐')
 
 
-def create_emotion_detector(method='fer', device='cpu'):
+def create_emotion_detector(method=None, device='cpu'):
     """
     Create emotion detector
     
     Args:
-        method: 'fer' or 'simple'
+        method: 'fer' or 'simple'. If None, uses config.
         device: 'cuda', 'mps', or 'cpu'
         
     Returns:

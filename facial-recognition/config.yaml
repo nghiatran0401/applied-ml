@@ -1,0 +1,170 @@
+# Facial Recognition Attendance System Configuration
+# All thresholds, paths, and hyperparameters are centralized here
+
+# Face Recognition Settings
+face_recognition:
+  # Similarity thresholds for matching
+  similarity_threshold_verify: 0.85 # Threshold for verification mode (stricter)
+  similarity_threshold_realtime: 0.6 # Threshold for real-time mode (more lenient)
+  similarity_threshold_duplicate: 0.9 # Threshold for duplicate face detection during registration
+
+  # Similarity metric to use
+  metric: "cosine" # Options: "cosine" or "euclidean"
+
+  # Model settings
+  model:
+    path: "models/classification_best.pth"
+    num_classes: 4000
+    embedding_dim: 2048 # For classification model
+    metric_learning_embedding_dim: 512 # For metric learning model
+
+# Face Detection Settings
+face_detection:
+  # MTCNN thresholds (lower = more lenient detection)
+  mtcnn_thresholds: [0.5, 0.6, 0.6]
+  min_face_size: 10
+  image_size: 160
+
+  # Quality assessment thresholds
+  quality:
+    min_quality_verify: 0.5 # Minimum quality for verification
+    min_quality_realtime: 0.4 # Minimum quality for real-time (more lenient)
+    min_quality_register: 0.0 # Minimum quality for registration (very lenient)
+    min_quality_check: 0.2 # Minimum quality for real-time quality checking
+
+    # Quality score weights
+    sharpness_weight: 0.4
+    size_weight: 0.3
+    aspect_weight: 0.15
+    brightness_weight: 0.15
+
+    # Quality calculation parameters
+    sharpness_threshold: 200.0 # Normalization threshold for sharpness
+    min_size_ratio: 0.02 # Minimum face size ratio
+    max_size_ratio: 0.30 # Maximum face size ratio
+    ideal_size_ratio_min: 0.05 # Ideal size range
+    ideal_size_ratio_max: 0.15
+
+  # Face angle validation
+  angle:
+    max_yaw: 30.0 # Maximum yaw angle in degrees
+    max_pitch: 30.0 # Maximum pitch angle in degrees
+    max_roll: 15.0 # Maximum roll angle in degrees
+    require_valid_angle_verify: true # Require valid angle for verification
+    require_valid_angle_realtime: false # More lenient for real-time
+
+# Anti-Spoofing Settings
+anti_spoofing:
+  method: "heuristic" # Options: "heuristic" or "deepface"
+  confidence_threshold: 0.5 # Minimum confidence to consider face as real
+
+  # Heuristic method weights
+  sharpness_weight: 0.4
+  texture_weight: 0.4
+  color_weight: 0.2
+
+  # Sharpness thresholds
+  sharpness_threshold_high: 200.0
+  sharpness_threshold_medium: 100.0
+  sharpness_threshold_low: 50.0
+
+  # Confidence scores based on sharpness
+  confidence_high: 0.9
+  confidence_medium: 0.7
+  confidence_low: 0.5
+
+# Emotion Detection Settings
+emotion_detection:
+  method: "fer" # Options: "fer" or "simple"
+  default_emotion: "neutral"
+  default_confidence: 0.5
+
+# Database Settings
+database:
+  # Face database
+  face_database_path: "face_database.pkl"
+  face_database_type: "pickle" # Options: "pickle", "sqlite" (future)
+
+  # Attendance logs
+  attendance_logs_path: "attendance_logs.json"
+  attendance_logs_type: "json" # Options: "json", "sqlite" (future)
+
+  # Cooldown settings
+  attendance_cooldown_minutes: 5 # Minutes between check-ins for same person
+
+# File Upload Settings
+file_upload:
+  max_file_size_mb: 10
+  allowed_extensions: [".jpg", ".jpeg", ".png"]
+  temp_upload_dir: "temp_uploads"
+  recognized_faces_dir: "recognized_faces"
+
+# API Settings
+api:
+  # Rate limiting (future)
+  rate_limit_per_minute: 60
+
+  # Request timeouts
+  request_timeout_seconds: 30
+
+  # Image processing
+  max_images_per_registration: 10
+
+# Real-Time Processing Settings
+realtime:
+  # Processing intervals
+  recognition_interval_ms: 200 # Milliseconds between recognition requests
+  face_tracking_threshold_px: 50 # Pixels threshold for face ID tracking
+
+  # Frame processing
+  frame_resize_factor: 0.25 # Resize frames to 1/4 size for faster processing
+
+  # Quality thresholds (more lenient for real-time)
+  min_quality: 0.4
+  require_valid_angle: false
+
+# Training Settings (for reference, used in training scripts)
+training:
+  classification:
+    batch_size: 64
+    learning_rate: 0.0001
+    num_epochs: 20
+    optimizer: "adam"
+    scheduler:
+      type: "ReduceLROnPlateau"
+      factor: 0.5
+      patience: 3
+
+  metric_learning:
+    batch_size: 32
+    learning_rate: 0.00001
+    num_epochs: 30
+    margin: 1.0
+    embedding_dim: 512
+    optimizer: "adam"
+    scheduler:
+      type: "ReduceLROnPlateau"
+      factor: 0.5
+      patience: 3
+
+# Data Augmentation Settings
+data_augmentation:
+  random_horizontal_flip_prob: 0.5
+  random_rotation_degrees: 10
+  color_jitter:
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.2
+    hue: 0.1
+
+# Logging Settings
+logging:
+  level: "INFO" # Options: "DEBUG", "INFO", "WARNING", "ERROR"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: null # Set to path if you want file logging
+
+# Device Settings
+device:
+  # Auto-detect device, but can override
+  preferred: "auto" # Options: "auto", "cuda", "cpu", "mps"
+  fallback_to_cpu: true
