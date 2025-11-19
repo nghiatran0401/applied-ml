@@ -10,58 +10,64 @@ This course is organized into modules, progressing from fundamental machine lear
 
 1. **Linear Regression**
 
-   - Medical insurance prediction
-   - Understanding regression fundamentals
+- Medical insurance prediction
+- Understanding regression fundamentals
 
 2. **Logistic Regression**
 
-   - Classification problems
-   - Binary classification techniques
+- Classification problems
+- Binary classification techniques
 
 3. **Support Vector Machine (SVM)**
 
-   - Advanced classification methods
-   - Kernel tricks and optimization
+- Advanced classification methods
+- Kernel tricks and optimization
 
 ### 🧠 Deep Learning & Neural Networks
 
 4. **Convolutional Neural Networks (CNN)**
 
-   - Image processing fundamentals
-   - Feature extraction and pattern recognition
+- Image processing fundamentals
+- Feature extraction and pattern recognition
 
 5. **Transfer Learning**
 
-   - Leveraging pre-trained models
-   - Fine-tuning for custom applications
+- Leveraging pre-trained models
+- Fine-tuning for custom applications
 
 6. **Object Detection**
 
-   - Localization and classification
-   - Advanced computer vision techniques
+- Localization and classification
+- Advanced computer vision techniques
 
 7. **Face Recognition**
 
-   - Biometric identification systems
-   - Real-world security applications
+- Biometric identification systems
+- Real-world security applications
 
 ### 🎨 Advanced Topics
 
 8. **Generative Deep Learning**
 
-   - Creative AI applications
-   - Image and content generation
+- Creative AI applications
+- Image and content generation
 
 9. **Natural Language Processing (NLP)**
 
-   - Text analysis and understanding
-   - Language models and applications
+- Text analysis and understanding
+- Language models and applications
 
 ### 🖼️ Specialized Applications
 
 10. **Image Classification Project**
 
-    - Categorizing and organizing visual data
-    - Practical classification projects
+- Categorizing and organizing visual data
+- Practical classification projects
 
-11. **Face Recognition Project**
+11. **Facial Recognition Attendance System**
+
+- End-to-end face recognition system with emotion and liveness detection
+- Two verification approaches: Classification-based and Metric Learning
+- Anti-spoofing module to detect fake faces
+- Emotion detection (7 emotions: happy, sad, angry, surprise, fear, disgust, neutral)
+- Streamlit-based user interface for registration and verification
