@@ -7,9 +7,50 @@
 
 ---
 
+## Table of Contents
+
+1. [Abstract](#abstract)
+2. [Introduction](#1-introduction)
+   - 1.1 Problem Statement
+   - 1.2 Objectives
+   - 1.3 Project Scope
+3. [Methodology](#2-methodology)
+   - 2.1 System Architecture
+   - 2.2 Face Verification Approaches
+   - 2.3 Similarity Metrics
+   - 2.4 Anti-Spoofing Module
+   - 2.5 Emotion Detection Module
+   - 2.6 User Interface
+   - 2.7 Training Optimization
+   - 2.8 Data Preprocessing
+   - 2.9 Evaluation Methodology
+   - 2.10 Key Concepts and Definitions
+4. [Results and Discussion](#3-results-and-discussion)
+   - 3.1 Training Results
+   - 3.2 Face Verification Performance
+   - 3.3 Distance Metric Comparison
+   - 3.4 Anti-Spoofing Performance
+   - 3.5 Emotion Detection Performance
+   - 3.6 System Integration
+   - 3.7 Challenges and Solutions
+   - 3.8 Best Performing Approach
+5. [Conclusion](#4-conclusion)
+   - 4.1 Summary
+   - 4.2 Key Achievements
+   - 4.3 Limitations
+   - 4.4 Future Improvements
+   - 4.5 Lessons Learned
+6. [References](#5-references)
+7. [Appendices](#appendices)
+   - Appendix A: Project Structure
+   - Appendix B: Hyperparameters
+   - Appendix C: Training Commands
+
+---
+
 ## Abstract
 
-This project implements an end-to-end face recognition attendance system for enterprise use. The system uses two different approaches for face verification: classification-based supervised learning and metric learning with triplet loss. Additionally, the system includes anti-spoofing (liveness detection) and emotion detection modules. A user-friendly FastAPI web interface allows users to register new employees and verify their identity. The classification approach achieved excellent performance with AUC of 0.9249, while the metric learning approach achieved good performance with AUC of 0.8747 after hyperparameter tuning, both exceeding the 0.85 target requirement.
+This project implements a complete face recognition attendance system for enterprise use. The system uses two different approaches for face verification: classification-based supervised learning and metric learning with triplet loss. The system also includes anti-spoofing (liveness detection) and emotion detection modules. A user-friendly FastAPI web interface allows users to register new employees and verify their identity. The classification approach achieved excellent performance with AUC of 0.9249, while the metric learning approach achieved good performance with AUC of 0.8747 after hyperparameter tuning. Both approaches exceed the 0.85 target requirement.
 
 ---
 
@@ -1413,12 +1454,12 @@ The real-time attendance system implements a hybrid approach combining client-si
 - **Problem**: Random triplets are too easy, model doesn't learn
 - **Solution**: Implemented hard negative mining (finds hardest negative for each anchor-positive pair)
 
-**Challenge 6: Model Loading in UI**
+**Challenge 7: Model Loading in UI**
 
 - **Problem**: UI needs to load models, but models are large
 - **Solution**: Lazy loading (load only when needed), use session state
 
-**Challenge 7: Real-Time Face Detection and Recognition**
+**Challenge 8: Real-Time Face Detection and Recognition**
 
 - **Problem**:
   - Need to detect and recognize faces in real-time from webcam feed
@@ -1603,15 +1644,16 @@ This project successfully implements a complete face recognition attendance syst
    - Production systems require careful threshold tuning based on use case
    - Classification model works well with 0.85 threshold for new face registration
 
-### 4.6 Lessons Learned (Original)
+---
 
-1. **Transfer Learning**: Pre-trained models (ResNet50) provide excellent starting point
-2. **GPU Acceleration**: Essential for deep learning projects. Cloud GPUs (RTX 5090) provide 7-12x speedup compared to local training, with better reliability and no thermal issues.
-3. **Cloud GPU for Training**: For long training sessions, cloud GPUs (Vast.AI) offer better performance, reliability, and system availability than local machines. RTX 5090 at $1.50-2.60 is cost-effective for saving 1-2 days of training time, with latest generation technology providing 7-12x speedup.
-4. **Thermal Management**: Local training on laptops causes severe thermal issues (max fans, system unavailability). Cloud GPUs eliminate these concerns.
-5. **Modular Design**: Separating components makes testing and debugging easier
-6. **Evaluation**: ROC/AUC are better metrics than accuracy for verification tasks
-7. **Hard Negative Mining**: Critical for metric learning (random triplets don't work)
+## Acknowledgments
+
+I would like to thank:
+
+- The course instructors for providing guidance and feedback throughout the project
+- The developers of open-source libraries (PyTorch, FastAPI, facenet-pytorch, FER) that made this project possible
+- Vast.AI for providing affordable cloud GPU access that enabled efficient model training
+- The research community for foundational papers on face recognition (FaceNet, ArcFace, ResNet)
 
 ---
 
@@ -1650,7 +1692,7 @@ facial-recognition/
 │   ├── train_metric_learning.py
 │   ├── evaluate_classification.py
 │   ├── evaluate_metric_learning.py
-│   └── app.py
+│   └── app_fastapi.py
 ├── models/              # Trained model checkpoints
 ├── results/             # Evaluation results and plots
 └── requirements.txt     # Dependencies
@@ -1660,24 +1702,28 @@ facial-recognition/
 
 ## Appendix B: Hyperparameters
 
-**Classification Model:**
+**Classification Model (Final Configuration):**
 
 - Learning Rate: 1e-4
-- Batch Size: 32
-- Epochs: 10
+- Batch Size: 64 (optimized for RTX 5090)
+- Epochs: 20
 - Optimizer: Adam
 - Loss: Cross-entropy
 - Learning Rate Scheduler: ReduceLROnPlateau (factor=0.5, patience=3)
+- Device: CUDA (RTX 5090)
+- Training Time: 8-16 hours total
 
-**Metric Learning Model:**
+**Metric Learning Model (Final Configuration After Retraining):**
 
-- Learning Rate: 1e-4
-- Batch Size: 32
-- Epochs: 10
+- Learning Rate: 1e-5 (reduced from 1e-4 to prevent collapse)
+- Batch Size: 32 (reduced from 64 for better triplet mining)
+- Epochs: 30 (increased from 20 for better convergence)
 - Optimizer: Adam
-- Loss: Triplet Loss (margin=0.5)
+- Loss: Triplet Loss (margin=1.0, increased from 0.5)
 - Embedding Dimension: 512
 - Learning Rate Scheduler: ReduceLROnPlateau (factor=0.5, patience=3)
+- Device: CUDA (RTX 5090)
+- Training Time: 12-24 hours total (retraining)
 
 ---
 
@@ -1688,24 +1734,26 @@ facial-recognition/
 ```bash
 python src/train_classification.py \
     --data_dir classification_data \
-    --epochs 10 \
-    --batch_size 32 \
+    --epochs 20 \
+    --batch_size 64 \
     --lr 1e-4 \
     --save_dir models
 ```
 
-**Train Metric Learning Model:**
+**Train Metric Learning Model (Final Configuration):**
 
 ```bash
 python src/train_metric_learning.py \
     --data_dir classification_data \
-    --epochs 10 \
+    --epochs 30 \
     --batch_size 32 \
-    --lr 1e-4 \
-    --margin 0.5 \
+    --lr 1e-5 \
+    --margin 1.0 \
     --embedding_dim 512 \
     --save_dir models
 ```
+
+**Note**: The metric learning model requires careful hyperparameter tuning. The initial training with default parameters (margin=0.5, lr=1e-4) resulted in model collapse. The final configuration above successfully avoids collapse and achieves good performance.
 
 ---
 
