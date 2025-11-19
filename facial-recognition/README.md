@@ -253,13 +253,3 @@ Both models were trained on RTX 5090 GPU (Vast.AI) with 4,000 classes and 380K+ 
 3. **Hard negative mining** - Essential for metric learning (random triplets don't work well)
 4. **Threshold selection** - Production threshold (0.85) may differ from evaluation threshold
 5. **Metric learning is sensitive** - Requires careful hyperparameter tuning to avoid model collapse
-
-## References
-
-- FaceNet: https://arxiv.org/abs/1503.03832
-- ArcFace: https://arxiv.org/abs/1801.07698
-- ResNet: https://arxiv.org/abs/1512.03385
-
-## License
-
-This project is for educational purposes only.

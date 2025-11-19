@@ -261,3 +261,5 @@ def get_database_path() -> str:
 
 
 def get_attendance_logs_path() -> str:
+    """Get attendance logs path from config"""
+    return get_config().database.attendance_logs_path
