@@ -1,28 +1,17 @@
-"""
-Evaluation utilities for face verification
-"""
 import torch
 import numpy as np
-from sklearn.metrics import roc_curve, auc, accuracy_score
+from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
 import os
 from tqdm import tqdm
+from PIL import Image
+from torchvision import transforms
+from pathlib import Path
 
 
 def compute_similarity(emb1, emb2, metric='cosine'):
-    """
-    Compute similarity between two embeddings
-    
-    Args:
-        emb1: First embedding vector
-        emb2: Second embedding vector
-        metric: 'cosine' or 'euclidean'
-        
-    Returns:
-        similarity: Similarity score (higher = more similar)
-    """
     if metric == 'cosine':
-        # Cosine similarity
+        # Cosine similarity: dot product / (norm1 * norm2)
         dot_product = np.dot(emb1, emb2)
         norm1 = np.linalg.norm(emb1)
         norm2 = np.linalg.norm(emb2)
@@ -31,12 +20,10 @@ def compute_similarity(emb1, emb2, metric='cosine'):
         return dot_product / (norm1 * norm2)
     
     elif metric == 'euclidean':
-        # Euclidean distance (convert to similarity)
+        # Euclidean distance: sqrt(sum((x1 - x2)^2 + (y1 - y2)^2 + (z1 - z2)^2))
         distance = np.linalg.norm(emb1 - emb2)
-        # Convert distance to similarity (inverse relationship)
-        # Using exponential decay: similarity = exp(-distance)
-        return np.exp(-distance)
-    
+        return np.exp(-distance) 
+
     else:
         raise ValueError(f"Unknown metric: {metric}")
 
@@ -49,26 +36,6 @@ def evaluate_verification_pairs(
     metric='cosine',
     batch_size=32
 ):
-    """
-    Evaluate model on verification pairs
-    
-    Args:
-        model: Trained model (with extract_embedding method)
-        pairs_file: Path to verification_pairs_val.txt
-        data_dir: Base directory for images
-        device: 'cuda' or 'cpu'
-        metric: 'cosine' or 'euclidean'
-        batch_size: Batch size for processing
-        
-    Returns:
-        similarities: List of similarity scores
-        labels: List of ground truth labels (1=same, 0=different)
-        auc_score: AUC score
-    """
-    from PIL import Image
-    from torchvision import transforms
-    from pathlib import Path
-    
     model.eval()
     
     # Load pairs
@@ -84,7 +51,7 @@ def evaluate_verification_pairs(
     
     print(f"Evaluating {len(pairs)} verification pairs...")
     
-    # Transform for images
+    # Transform images to tensor
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
@@ -100,9 +67,19 @@ def evaluate_verification_pairs(
     with torch.no_grad():
         for img1_path, img2_path, label in tqdm(pairs, desc='Processing pairs'):
             try:
+                # Handle paths - remove data_dir prefix if already present
+                img1_clean = img1_path
+                img2_clean = img2_path
+                
+                # If path already contains data_dir name, remove it
+                if data_dir.name in img1_path:
+                    img1_clean = img1_path.replace(data_dir.name + '/', '')
+                if data_dir.name in img2_path:
+                    img2_clean = img2_path.replace(data_dir.name + '/', '')
+                
                 # Load images
-                img1 = Image.open(data_dir / img1_path).convert('RGB')
-                img2 = Image.open(data_dir / img2_path).convert('RGB')
+                img1 = Image.open(data_dir / img1_clean).convert('RGB')
+                img2 = Image.open(data_dir / img2_clean).convert('RGB')
                 
                 # Transform
                 img1_tensor = transform(img1).unsqueeze(0).to(device)
@@ -132,16 +109,6 @@ def evaluate_verification_pairs(
 
 
 def plot_roc_curve(fpr, tpr, auc_score, save_path=None, title='ROC Curve'):
-    """
-    Plot ROC curve
-    
-    Args:
-        fpr: False positive rates
-        tpr: True positive rates
-        auc_score: AUC score
-        save_path: Path to save plot
-        title: Plot title
-    """
     plt.figure(figsize=(8, 6))
     plt.plot(fpr, tpr, color='darkorange', lw=2, 
              label=f'ROC curve (AUC = {auc_score:.3f})')
@@ -163,13 +130,7 @@ def plot_roc_curve(fpr, tpr, auc_score, save_path=None, title='ROC Curve'):
     plt.close()
 
 
-def compute_accuracy(y_true, y_pred):
-    """Compute accuracy"""
-    return accuracy_score(y_true, y_pred)
-
-
 def save_checkpoint(model, optimizer, epoch, accuracy, filepath):
-    """Save model checkpoint"""
     checkpoint = {
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
@@ -180,10 +141,8 @@ def save_checkpoint(model, optimizer, epoch, accuracy, filepath):
 
 
 def load_checkpoint(filepath, model, optimizer=None):
-    """Load model checkpoint"""
     checkpoint = torch.load(filepath)
     model.load_state_dict(checkpoint['model_state_dict'])
     if optimizer:
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     return checkpoint['epoch'], checkpoint['accuracy']
-

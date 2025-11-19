@@ -96,9 +96,19 @@ class FaceVerificationDataset(Dataset):
     def __getitem__(self, idx):
         img1_path, img2_path, label = self.pairs[idx]
         
+        # Handle paths - remove data_dir prefix if already present
+        img1_clean = img1_path
+        img2_clean = img2_path
+        
+        # If path already contains data_dir name, remove it
+        if self.data_dir.name in img1_path:
+            img1_clean = img1_path.replace(self.data_dir.name + '/', '')
+        if self.data_dir.name in img2_path:
+            img2_clean = img2_path.replace(self.data_dir.name + '/', '')
+        
         # Load images
-        img1 = Image.open(self.data_dir / img1_path).convert('RGB')
-        img2 = Image.open(self.data_dir / img2_path).convert('RGB')
+        img1 = Image.open(self.data_dir / img1_clean).convert('RGB')
+        img2 = Image.open(self.data_dir / img2_clean).convert('RGB')
         
         if self.transform:
             img1 = self.transform(img1)
