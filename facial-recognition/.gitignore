@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project Specific
+temp_uploads/*.jpg
+temp_uploads/*.png
+temp_uploads/*.jpeg
+recognized_faces/*.jpg
+recognized_faces/*.png
+!recognized_faces/.gitkeep
+
+# Data files (keep structure, ignore content)
+*.pkl
+!face_database.pkl  # Keep the main database
+attendance_logs.json
+
+# Logs
+*.log
+!training.log  # Keep training logs for reference
+!metric_training.log
+
+# Models (large files - keep structure)
+models/*.pth
+models/*.pt
+!models/.gitkeep
+
+# Results (keep structure)
+results/*.png
+results/*.jpg
+results/*.json
+!results/.gitkeep
+
+# Environment variables
+.env
+.env.local
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
