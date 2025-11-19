@@ -15,9 +15,6 @@ class FaceClassificationDataset(Dataset):
     """
     def __init__(self, data_dir, transform=None):
         """
-        Args:
-            data_dir: Directory containing subdirectories, each is a person
-            transform: Optional transform to be applied on image
         """
         self.data_dir = Path(data_dir)
         self.transform = transform
@@ -69,10 +66,6 @@ class FaceVerificationDataset(Dataset):
     """
     def __init__(self, pairs_file, data_dir, transform=None):
         """
-        Args:
-            pairs_file: Path to verification_pairs_val.txt
-            data_dir: Base directory for images
-            transform: Optional transform to be applied on image
         """
         self.data_dir = Path(data_dir)
         self.transform = transform
@@ -120,13 +113,6 @@ class FaceVerificationDataset(Dataset):
 def get_transforms(train=True, image_size=224):
     """
     Get data augmentation transforms
-    
-    Args:
-        train: If True, apply data augmentation
-        image_size: Target image size
-        
-    Returns:
-        transform: torchvision transform
     """
     if train:
         transform = transforms.Compose([
@@ -152,14 +138,6 @@ def get_transforms(train=True, image_size=224):
 def create_data_loaders(classification_data_dir, batch_size=32, num_workers=4):
     """
     Create data loaders for classification training
-    
-    Args:
-        classification_data_dir: Directory containing train_data/, val_data/, test_data/
-        batch_size: Batch size for training
-        num_workers: Number of workers for data loading
-        
-    Returns:
-        train_loader, val_loader, test_loader, num_classes
     """
     train_dir = os.path.join(classification_data_dir, 'train_data')
     val_dir = os.path.join(classification_data_dir, 'val_data')

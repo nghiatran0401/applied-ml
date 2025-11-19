@@ -15,9 +15,6 @@ class FaceEmbeddingModel(nn.Module):
     """
     def __init__(self, pretrained=True, embedding_dim=512):
         """
-        Args:
-            pretrained: Use pre-trained ResNet50 weights
-            embedding_dim: Dimension of output embedding (can add projection layer)
         """
         super(FaceEmbeddingModel, self).__init__()
         
@@ -47,12 +44,6 @@ class FaceEmbeddingModel(nn.Module):
     def forward(self, x):
         """
         Forward pass to extract embeddings
-        
-        Args:
-            x: Input images (batch_size, 3, 224, 224)
-            
-        Returns:
-            embeddings: Face embeddings (batch_size, embedding_dim)
         """
         # Forward through backbone
         x = self.backbone.conv1(x)
@@ -79,21 +70,12 @@ class FaceEmbeddingModel(nn.Module):
     def extract_embedding(self, x):
         """
         Extract face embedding (same as forward)
-        
-        Args:
-            x: Input images (batch_size, 3, 224, 224)
-            
-        Returns:
-            embeddings: Face embeddings (batch_size, embedding_dim)
         """
         return self.forward(x)
     
     def freeze_backbone(self, freeze=True):
         """
         Freeze or unfreeze backbone layers
-        
-        Args:
-            freeze: If True, freeze backbone, only train projection
         """
         for param in self.backbone.parameters():
             param.requires_grad = not freeze
@@ -111,8 +93,6 @@ class TripletLoss(nn.Module):
     """
     def __init__(self, margin=0.5):
         """
-        Args:
-            margin: Margin for triplet loss (default 0.5)
         """
         super(TripletLoss, self).__init__()
         self.margin = margin
@@ -120,14 +100,6 @@ class TripletLoss(nn.Module):
     def forward(self, anchor, positive, negative):
         """
         Compute triplet loss
-        
-        Args:
-            anchor: Anchor embeddings (batch_size, embedding_dim)
-            positive: Positive embeddings (batch_size, embedding_dim)
-            negative: Negative embeddings (batch_size, embedding_dim)
-            
-        Returns:
-            loss: Triplet loss value
         """
         # Compute distances (using squared Euclidean distance)
         # Since embeddings are L2 normalized, this is equivalent to:
@@ -144,14 +116,6 @@ class TripletLoss(nn.Module):
 def create_embedding_model(pretrained=True, embedding_dim=512, freeze_backbone=False):
     """
     Create and configure embedding model for metric learning
-    
-    Args:
-        pretrained: Use pre-trained weights
-        embedding_dim: Dimension of output embedding
-        freeze_backbone: Freeze backbone layers (fine-tune only projection)
-        
-    Returns:
-        model: Configured model
     """
     model = FaceEmbeddingModel(pretrained=pretrained, embedding_dim=embedding_dim)
     

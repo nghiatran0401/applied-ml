@@ -11,16 +11,6 @@ def get_triplets(embeddings, labels, margin=0.5):
     """
     Generate triplets from embeddings and labels
     Uses hard negative mining: selects hardest negative for each anchor-positive pair
-    
-    Args:
-        embeddings: Face embeddings (batch_size, embedding_dim)
-        labels: Person labels (batch_size,)
-        margin: Margin for triplet loss
-        
-    Returns:
-        anchor_indices: Indices of anchor samples
-        positive_indices: Indices of positive samples
-        negative_indices: Indices of negative samples (hard negatives)
     """
     embeddings = embeddings.detach().cpu().numpy()
     labels = labels.detach().cpu().numpy()
@@ -91,16 +81,6 @@ def batch_hard_triplet_mining(embeddings, labels, margin=0.5):
     """
     Batch hard triplet mining
     For each anchor, find hardest positive and hardest negative in the batch
-    
-    Args:
-        embeddings: Face embeddings (batch_size, embedding_dim) - L2 normalized
-        labels: Person labels (batch_size,)
-        margin: Margin for triplet loss
-        
-    Returns:
-        anchor: Anchor embeddings
-        positive: Positive embeddings (hardest positive)
-        negative: Negative embeddings (hardest negative)
     """
     # Compute pairwise distances (since embeddings are normalized, use cosine distance)
     # distance = 1 - cosine_similarity = 1 - (a^T * b)
@@ -161,12 +141,6 @@ def batch_hard_triplet_mining(embeddings, labels, margin=0.5):
 def create_triplet_dataset(dataset, num_triplets_per_epoch=None):
     """
     Create triplet dataset from classification dataset
-    
-    Args:
-        dataset: FaceClassificationDataset
-        num_triplets_per_epoch: Number of triplets to generate per epoch
-        
-    Returns:
         List of (anchor_idx, positive_idx, negative_idx) tuples
     """
     # Group images by label

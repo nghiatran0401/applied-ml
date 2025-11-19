@@ -1,6 +1,5 @@
 """
 Training script for Metric Learning Face Verification
-Uses triplet loss with hard negative mining
 """
 import sys
 from pathlib import Path
@@ -108,22 +107,6 @@ def train_metric_learning_model(
 ):
     """
     Train metric learning model with triplet loss
-    
-    Args:
-        classification_data_dir: Path to classification_data/ directory
-        num_epochs: Number of training epochs (default: 30, increased from 20)
-        batch_size: Batch size (default: 32, reduced from 64 for better triplet mining)
-        learning_rate: Learning rate (default: 1e-5, reduced from 1e-4 to prevent collapse)
-        margin: Margin for triplet loss (default: 1.0, increased from 0.5 for more separation)
-        embedding_dim: Dimension of face embeddings
-        save_dir: Directory to save model
-        device: 'cuda' or 'cpu' (auto-detected if None)
-    
-    Note: Hyperparameters adjusted to prevent embedding collapse:
-    - Larger margin (1.0) creates more separation between classes
-    - Lower learning rate (1e-5) prevents instability
-    - Smaller batch size (32) improves triplet mining quality
-    - More epochs (30) allows model to converge properly
     """
     # Device selection: CUDA > CPU
     if device is None:
@@ -257,9 +240,9 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=32,
                        help='Batch size (smaller for better triplet mining)')
     parser.add_argument('--lr', type=float, default=1e-5,
-                       help='Learning rate (lower to prevent collapse)')
+                       help='Learning rate')
     parser.add_argument('--margin', type=float, default=1.0,
-                       help='Margin for triplet loss (larger to create more separation)')
+                       help='Margin for triplet loss')
     parser.add_argument('--embedding_dim', type=int, default=512,
                        help='Embedding dimension')
     parser.add_argument('--save_dir', type=str, default='models',

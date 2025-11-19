@@ -1,16 +1,14 @@
 """
-FastAPI Web Application for Face Recognition Attendance System
+FastAPI web app for face recognition attendance
 """
 import sys
 import os
 from pathlib import Path
 
-# Suppress TensorFlow/gRPC warnings and set threading before any ML imports
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
-os.environ['OMP_NUM_THREADS'] = '1'  # Limit OpenMP threads
-os.environ['MKL_NUM_THREADS'] = '1'  # Limit MKL threads
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
 
-# Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -26,18 +24,14 @@ import io
 import uuid
 import logging
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Lazy imports - only import when needed to avoid TensorFlow/gRPC mutex issues
-# These will be imported inside functions when actually used
-
 def convert_to_python_types(obj):
-    """Convert NumPy types to native Python types for JSON serialization"""
+    """Convert numpy types to python types for JSON"""
     if isinstance(obj, np.integer):
         return int(obj)
     elif isinstance(obj, np.floating):
@@ -54,18 +48,15 @@ def convert_to_python_types(obj):
 
 app = FastAPI(title="Face Recognition Attendance System", version="1.0.0")
 
-# Create templates directory
 templates_dir = Path(__file__).parent.parent / "templates"
 templates_dir.mkdir(exist_ok=True)
 
 def render_template(template_name: str, **kwargs):
-    """Render Jinja2 template"""
     template_path = templates_dir / template_name
     with open(template_path, 'r') as f:
         template = Template(f.read())
     return template.render(**kwargs)
 
-# Initialize components (lazy loading)
 face_detector = None
 anti_spoofing = None
 emotion_detector = None
@@ -73,13 +64,11 @@ database = None
 attendance_logger = None
 
 def get_device():
-    """Get available device"""
     if torch.cuda.is_available():
         return 'cuda'
     return 'cpu'
 
 def initialize_components():
-    """Initialize all components (lazy loading to avoid import-time mutex issues)"""
     global face_detector, anti_spoofing, emotion_detector, database, attendance_logger
     
     if face_detector is None:
@@ -382,7 +371,7 @@ async def check_image_quality(image: UploadFile = File(...)):
         
         # Check if face is centered (using bbox if available)
         # Extremely lenient centering - 50% offset allowed (basically anywhere in frame)
-        # Note: bbox format is (x1, y1, x2, y2) from detect_all_faces
+        # bbox format is (x1, y1, x2, y2)
         is_centered = True  # Default to True if no bbox
         if bbox and len(bbox) >= 4:
             # Handle both formats: (x1, y1, x2, y2) or (x, y, width, height)

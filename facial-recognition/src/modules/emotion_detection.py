@@ -41,9 +41,6 @@ class EmotionDetector:
     """
     def __init__(self, method=None, device='cpu'):
         """
-        Args:
-            method: 'fer' (FER library) or 'simple' (heuristic). If None, uses config.
-            device: 'cuda' or 'cpu'
         """
         config = get_config()
         self.method = method if method is not None else config.emotion_detection.method
@@ -64,14 +61,6 @@ class EmotionDetector:
     def detect(self, image):
         """
         Detect emotion from face image
-        
-        Args:
-            image: PIL Image or numpy array (face image)
-            
-        Returns:
-            emotion: Detected emotion (string)
-            confidence: Confidence score (0-1)
-            all_emotions: Dictionary of all emotion scores
         """
         if self.method == 'fer':
             return self._detect_fer(image)
@@ -179,12 +168,6 @@ class EmotionDetector:
     def detect_batch(self, images):
         """
         Detect emotions for batch of images
-        
-        Args:
-            images: List of PIL Images or numpy arrays
-            
-        Returns:
-            results: List of (emotion, confidence, all_emotions) tuples
         """
         results = []
         for img in images:
@@ -195,12 +178,6 @@ class EmotionDetector:
     def get_emotion_icon(self, emotion):
         """
         Get emoji icon for emotion
-        
-        Args:
-            emotion: Emotion string
-            
-        Returns:
-            icon: Emoji string
         """
         emotion_icons = {
             'happy': '😊',
@@ -217,13 +194,6 @@ class EmotionDetector:
 def create_emotion_detector(method=None, device='cpu'):
     """
     Create emotion detector
-    
-    Args:
-        method: 'fer' or 'simple'. If None, uses config.
-        device: 'cuda', 'mps', or 'cpu'
-        
-    Returns:
-        detector: EmotionDetector instance
     """
     return EmotionDetector(method=method, device=device)
 

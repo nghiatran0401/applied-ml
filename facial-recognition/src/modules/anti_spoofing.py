@@ -1,7 +1,5 @@
 """
 Anti-Spoofing (Liveness Detection) Module
-Detects fake faces (printed photos, screen photos)
-Enhanced with improved heuristics and additional detection methods
 """
 import torch
 import torch.nn as nn
@@ -43,11 +41,6 @@ class AntiSpoofingDetector:
     Uses pre-trained models or heuristic methods
     """
     def __init__(self, method=None, device='cpu'):
-        """
-        Args:
-            method: 'deepface', 'heuristic', or 'enhanced_heuristic'. If None, uses config.
-            device: 'cuda' or 'cpu'
-        """
         config = get_config()
         self.method = method if method is not None else config.anti_spoofing.method
         self.device = device
@@ -65,16 +58,7 @@ class AntiSpoofingDetector:
             logger.info("Using basic heuristic-based anti-spoofing detection")
     
     def detect(self, image):
-        """
-        Detect if face is real or spoofed
-        
-        Args:
-            image: PIL Image or numpy array (face image)
-            
-        Returns:
-            is_real: True if real face, False if spoofed
-            confidence: Confidence score (0-1, higher = more confident it's real)
-        """
+        """Detect if face is real or spoofed"""
         if self.method == 'deepface':
             return self._detect_deepface(image)
         elif self.method == 'enhanced_heuristic':
@@ -83,9 +67,7 @@ class AntiSpoofingDetector:
             return self._detect_heuristic(image)
     
     def _detect_deepface(self, image):
-        """
-        Use DeepFace for liveness detection
-        """
+        """Use DeepFace for liveness detection"""
         try:
             # Lazy import DeepFace only when needed
             DeepFace = _get_deepface()
@@ -99,7 +81,7 @@ class AntiSpoofingDetector:
                 img_array = image
             
             # DeepFace liveness detection
-            # Note: DeepFace may not have direct liveness detection
+            # DeepFace may not have direct liveness detection
             # We'll use a combination of face analysis and heuristics
             result = DeepFace.analyze(
                 img_path=img_array,
@@ -135,10 +117,7 @@ class AntiSpoofingDetector:
             return self._detect_heuristic(image)
     
     def _detect_heuristic(self, image):
-        """
-        Heuristic-based liveness detection
-        Uses image quality, texture analysis, etc.
-        """
+        """Heuristic-based liveness detection"""
         # Convert to numpy array
         if isinstance(image, Image.Image):
             img_array = np.array(image)
@@ -184,10 +163,7 @@ class AntiSpoofingDetector:
         return is_real, float(confidence)
     
     def _compute_texture_score(self, gray):
-        """
-        Compute texture variation score
-        Higher = more texture = more likely real
-        """
+        """Compute texture variation score"""
         # Compute gradient magnitude
         grad_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
         grad_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
@@ -199,10 +175,7 @@ class AntiSpoofingDetector:
         return texture_score
     
     def _compute_color_score(self, img_array):
-        """
-        Compute color distribution score
-        Real faces usually have more natural color variation
-        """
+        """Compute color distribution score"""
         # Compute color variance in different channels
         color_var = np.var(img_array, axis=(0, 1))
         color_score = np.mean(color_var) / 100.0  # Normalize
@@ -210,10 +183,7 @@ class AntiSpoofingDetector:
         return min(color_score, 1.0)
     
     def _detect_enhanced_heuristic(self, image):
-        """
-        Enhanced heuristic-based liveness detection
-        Uses multiple advanced techniques for better accuracy
-        """
+        """Enhanced heuristic-based liveness detection"""
         # Convert to numpy array
         if isinstance(image, Image.Image):
             img_array = np.array(image)
@@ -467,15 +437,7 @@ class AntiSpoofingDetector:
         return motion_score
     
     def detect_batch(self, images):
-        """
-        Detect liveness for batch of images
-        
-        Args:
-            images: List of PIL Images or numpy arrays
-            
-        Returns:
-            results: List of (is_real, confidence) tuples
-        """
+        """Detect liveness for batch of images"""
         results = []
         for img in images:
             is_real, confidence = self.detect(img)
@@ -484,15 +446,6 @@ class AntiSpoofingDetector:
 
 
 def create_anti_spoofing_detector(method=None, device='cpu'):
-    """
-    Create anti-spoofing detector
-    
-    Args:
-        method: 'deepface' or 'heuristic'. If None, uses config.
-        device: 'cuda', 'mps', or 'cpu'
-        
-    Returns:
-        detector: AntiSpoofingDetector instance
-    """
+    """Create anti-spoofing detector"""
     return AntiSpoofingDetector(method=method, device=device)
 

@@ -52,18 +52,6 @@ class AttendanceLogger:
     ) -> Dict:
         """
         Log an attendance record
-        
-        Args:
-            person_id: Employee ID
-            person_name: Employee name
-            attendance_type: "check_in" or "check_out"
-            confidence: Recognition confidence score
-            emotion: Detected emotion
-            liveness_score: Anti-spoofing confidence
-            location: Entry point location
-            
-        Returns:
-            Dictionary with attendance record
         """
         record = {
             "id": len(self.logs) + 1,
@@ -130,12 +118,6 @@ class AttendanceLogger:
     def should_log_check_in(self, person_id: int, cooldown_minutes: int = 5) -> bool:
         """
         Check if we should log a check-in (prevent duplicates)
-        
-        Args:
-            person_id: Employee ID
-            cooldown_minutes: Minutes to wait before allowing another check-in
-            
-        Returns:
             True if check-in should be logged, False otherwise
         """
         today_logs = self.get_today_logs()
@@ -158,8 +140,6 @@ class AttendanceLogger:
     def delete_all_logs(self) -> bool:
         """
         Delete all attendance logs
-        
-        Returns:
             True if successful, False otherwise
         """
         try:

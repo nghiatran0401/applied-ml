@@ -22,17 +22,8 @@ logger = logging.getLogger(__name__)
 class FaceDatabase:
     """
     Database for storing and retrieving face embeddings
-    Similar to face_recognition library but uses our trained model
     """
     def __init__(self, model_path, num_classes, device='cpu'):
-        """
-        Initialize face database with trained model
-        
-        Args:
-            model_path: Path to trained classification model
-            num_classes: Number of classes the model was trained on
-            device: 'cpu' or 'cuda'
-        """
         self.device = device
         self.model = create_model(num_classes=num_classes, pretrained=False)
         checkpoint = torch.load(model_path, map_location=device)
@@ -57,15 +48,7 @@ class FaceDatabase:
         ])
     
     def extract_embedding(self, image_path):
-        """
-        Extract face embedding from image
-        
-        Args:
-            image_path: Path to image file
-            
-        Returns:
-            embedding: Face embedding vector (normalized) or None if no face detected
-        """
+        """Extract face embedding from image"""
         # Detect and align face
         face, bbox = self.face_detector.detect_and_align(image_path)
         if face is None:
@@ -87,14 +70,7 @@ class FaceDatabase:
         return embedding
     
     def register_person(self, person_id, person_name, image_paths):
-        """
-        Register a person with multiple images
-        
-        Args:
-            person_id: Unique ID for person
-            person_name: Name of person
-            image_paths: List of image paths for this person
-        """
+        """Register a person with multiple images"""
         embeddings = []
         for img_path in image_paths:
             embedding = self.extract_embedding(img_path)
@@ -121,12 +97,7 @@ class FaceDatabase:
             logger.warning(f"No valid faces found for {person_name}")
     
     def load_from_folder(self, folder_path):
-        """
-        Load known faces from folder structure (like 7-face-recognition)
-        
-        Args:
-            folder_path: Directory with subfolders, each is a person
-        """
+        """Load known faces from folder structure"""
         folder = Path(folder_path)
         for person_folder in folder.iterdir():
             if person_folder.is_dir():
@@ -142,17 +113,7 @@ class FaceDatabase:
                     self.register_person(person_id, person_name, image_paths)
     
     def find_match(self, embedding, threshold=None, metric=None):
-        """
-        Find best matching person for given embedding
-        
-        Args:
-            embedding: Face embedding to match
-            threshold: Similarity threshold (higher = stricter). If None, uses config default.
-            metric: 'cosine' or 'euclidean'. If None, uses config default.
-            
-        Returns:
-            (person_id, person_name, similarity_score) or (None, None, 0)
-        """
+        """Find best matching person for given embedding"""
         config = get_config()
         if threshold is None:
             threshold = config.face_recognition.similarity_threshold_verify

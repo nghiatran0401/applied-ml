@@ -35,14 +35,6 @@ def evaluate_metric_learning_model(
 ):
     """
     Evaluate metric learning model on verification pairs
-    
-    Args:
-        model_path: Path to trained model checkpoint
-        pairs_file: Path to verification_pairs_val.txt
-        data_dir: Base directory for verification images
-        embedding_dim: Dimension of embeddings (must match model)
-        save_dir: Directory to save results
-        device: 'cuda' or 'cpu' (auto-detected if None)
     """
     # Device selection: CUDA > CPU
     if device is None:

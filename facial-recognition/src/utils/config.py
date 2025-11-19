@@ -164,12 +164,6 @@ _config: Optional[AppConfig] = None
 def load_config(config_path: Optional[str] = None) -> AppConfig:
     """
     Load configuration from YAML file
-    
-    Args:
-        config_path: Path to config.yaml file. If None, looks for config.yaml in project root.
-        
-    Returns:
-        AppConfig instance
     """
     global _config
     
@@ -207,9 +201,6 @@ def load_config(config_path: Optional[str] = None) -> AppConfig:
 def get_config() -> AppConfig:
     """
     Get the current configuration instance
-    
-    Returns:
-        AppConfig instance (loads if not already loaded)
     """
     if _config is None:
         return load_config()
@@ -219,12 +210,6 @@ def get_config() -> AppConfig:
 def reload_config(config_path: Optional[str] = None) -> AppConfig:
     """
     Reload configuration from file (useful for testing or hot-reloading)
-    
-    Args:
-        config_path: Path to config.yaml file
-        
-    Returns:
-        AppConfig instance
     """
     global _config
     _config = None
@@ -234,10 +219,6 @@ def reload_config(config_path: Optional[str] = None) -> AppConfig:
 def save_config(config: AppConfig, config_path: Optional[str] = None):
     """
     Save configuration to YAML file
-    
-    Args:
-        config: AppConfig instance to save
-        config_path: Path to save config.yaml. If None, uses project root.
     """
     if config_path is None:
         project_root = Path(__file__).parent.parent.parent
@@ -280,6 +261,3 @@ def get_database_path() -> str:
 
 
 def get_attendance_logs_path() -> str:
-    """Get attendance logs path from config"""
-    return get_config().database.attendance_logs_path
-

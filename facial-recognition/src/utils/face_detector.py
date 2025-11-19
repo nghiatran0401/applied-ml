@@ -1,6 +1,5 @@
 """
 Face Detection and Alignment using MTCNN
-Enhanced with multi-face detection, quality assessment, and angle validation
 """
 import cv2
 import numpy as np
@@ -12,12 +11,7 @@ from src.utils.config import get_config
 
 class FaceDetector:
     def __init__(self, device=None):
-        """
-        Initialize MTCNN face detector
-        
-        Args:
-            device: 'cuda' or 'cpu'
-        """
+        """Initialize MTCNN face detector"""
         if device is None:
             # Device selection: CUDA > CPU
             if torch.cuda.is_available():
@@ -39,16 +33,7 @@ class FaceDetector:
         )
     
     def detect_and_align(self, image_path):
-        """
-        Detect face and return aligned face image
-        
-        Args:
-            image_path: Path to image file
-            
-        Returns:
-            aligned_face: PIL Image of aligned face (160x160)
-            bounding_box: (x, y, width, height) or None if no face
-        """
+        """Detect face and return aligned face image"""
         try:
             # Load image
             img = Image.open(image_path).convert('RGB')
@@ -74,16 +59,7 @@ class FaceDetector:
         return aligned_face, bounding_box
     
     def detect_all_faces(self, image_path):
-        """
-        Detect all faces in image (for crowded environments)
-        
-        Args:
-            image_path: Path to image file
-            
-        Returns:
-            List of dicts with keys: 'face' (PIL Image), 'bbox' (x1, y1, x2, y2), 
-            'confidence', 'quality_score', 'angle_info'
-        """
+        """Detect all faces in image"""
         # Load image
         img_cv = cv2.imread(image_path)
         if img_cv is None:
@@ -136,13 +112,6 @@ class FaceDetector:
         """
         Calculate face quality score based on multiple factors
         
-        Args:
-            face_image: PIL Image of face
-            face_width, face_height: Face dimensions in original image
-            img_width, img_height: Original image dimensions
-            
-        Returns:
-            Quality score (0.0 to 1.0, higher is better)
         """
         # Convert PIL to numpy for processing
         face_np = np.array(face_image.convert('L'))  # Grayscale
@@ -203,13 +172,6 @@ class FaceDetector:
         Estimate face pose angles (yaw, pitch, roll)
         Simplified estimation based on face position and size
         
-        Args:
-            face_width, face_height: Face dimensions
-            face_x, face_y: Face position
-            img_width, img_height: Image dimensions
-            
-        Returns:
-            Dict with 'yaw', 'pitch', 'roll' estimates (in degrees)
         """
         config = get_config()
         angle_cfg = config.face_detection.angle
@@ -244,14 +206,6 @@ class FaceDetector:
         """
         Detect face with quality and angle validation
         
-        Args:
-            image_path: Path to image file
-            min_quality: Minimum quality score (0.0 to 1.0)
-            require_valid_angle: If True, reject faces with extreme angles
-            
-        Returns:
-            Tuple: (aligned_face, bbox, quality_info) or (None, None, None)
-            quality_info: Dict with 'quality_score', 'angle_info', 'warnings'
         """
         # First, try to detect all faces
         all_faces = self.detect_all_faces(image_path)
